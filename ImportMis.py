@@ -284,7 +284,7 @@ class ImportMis:
                 bpy.data.objects.remove(child)
             if include_path_triggers == False and child.dif_props.interior_type == "path_trigger":
                 bpy.data.objects.remove(child)
-            if deleteDtsCol == True and itemObject.name.find(".dts") != -1 and child.type == "MESH" and child.name.find("Col") != -1:
+            if deleteDtsCol == True and itemObject.name.find(".dts") != -1 and str.casefold(child.name).find(str.casefold("Col")) != -1:
                 bpy.data.objects.remove(child)
             else:
                 if item["dts"] == True and len(child.material_slots) != 0:
