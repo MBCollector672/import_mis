@@ -4,6 +4,8 @@ import sys
 import math
 import glob
 import random
+import operator
+import concurrent.futures
 from pathlib import Path
 # import io_dif
 ioDifPath = bpy.utils.user_resource('SCRIPTS', path="addons")
@@ -11,10 +13,36 @@ sys.path.append(ioDifPath)
 import io_dif
 from io_dif import import_dif
 import io_scene_dts
-from io_scene_dts import import_dts
-class ImportMis:        
+from io_scene_dts import import_dts    
 
+def load(operator, context, filepath,
+     # mis import configs
+    include_path_triggers = False,
+    include_path_nodes = False,
+    include_static_interiors = True,
+    include_pathed_interiors = True,
+    include_game_entities = False,
+    include_dts = True,
+    include_dif = True,
+    include_item = True,
+    include_tsstatic = True,
+    include_static_shape = True,
+    attempt_to_fix_transparency = True,
+    random_gems = True,
+    allowIllegalMbuGems = False,
+    allowPlatinumGems = False,
+    deleteDtsCol = True,
+    onlyHighestLod = True,
+    # dts import configs
+    reference_keyframe = False,
+    import_sequences = False,
+    use_armature = False,
+    debug_report = False
+    ):
+    failedDif = []
+    failedDts = []
     def material_check(texNode,mat,matOldName,item,bsdfNode,attempt_to_fix_transparency,onlyTransparency = False):
+        fileExtensions = ["",".png",".jpg",".PNG",".JPG"]
         if texNode == None and onlyTransparency == False:
             texNode = mat.node_tree.nodes.new("ShaderNodeTexImage")
             matOldName = matOldName[:matOldName.find("#")] if matOldName.find("#") != -1 else matOldName
@@ -26,12 +54,28 @@ class ImportMis:
                 newImagePath = imagePath
             if item["skin"] != None:
                 print(item["skin"])
-                texNode.image = bpy.data.images.load(newImagePath)
+                try: texNode.image = bpy.data.images.load(newImagePath)
+                except:
+                    print("Skin",item["skin"],"at",newImagePath,"doesn't seem to exist. Using base skin instead")
+                    texNode.image = bpy.data.images.load(imagePath)
                 bpy.data.materials[mat.name].node_tree.links.new(texNode.outputs["Color"], bsdfNode.inputs["Base Color"])
             else:
-                texNode.image = bpy.data.images.load(imagePath)
-                bpy.data.materials[mat.name].node_tree.links.new(texNode.outputs["Color"], bsdfNode.inputs["Base Color"])
-        if mat.torque_props.use_transparency == True and attempt_to_fix_transparency == True:
+                # trash hacky fix for materials sometimes not having their file extension in the name
+                for fileExtension in fileExtensions:
+                    try: 
+                        texNode.image = bpy.data.images.load(imagePath + fileExtension)
+                        break
+                    except: 
+                        if fileExtensions.index(fileExtension) == len(fileExtensions) - 1:
+                            print("No image found at " + imagePath)
+                            nodes.remove(texNode)
+                            texNode = ""
+                if texNode != "":
+                    bpy.data.materials[mat.name].node_tree.links.new(texNode.outputs["Color"], bsdfNode.inputs["Base Color"])
+                    print("used image is" + str(texNode.image))
+        if texNode != "" and item["gem"] == True and texNode.image.name.find("gemshine") == -1:
+            bpy.data.images[texNode.image.name].alpha_mode = 'NONE'
+        if texNode != "" and mat.torque_props.use_transparency == True and attempt_to_fix_transparency == True:
             bpy.data.materials[mat.name].node_tree.links.new(texNode.outputs["Alpha"], bsdfNode.inputs["Alpha"])
 
     def find_in_file(misString, string, scriptString, activeMisDataPath, rand, allowIllegalMbuGems, allowPlatinumGems):
@@ -91,9 +135,6 @@ class ImportMis:
                         color = str(pqValidGems[random.randint(0,len(pqValidGems) - 1)])
                 case _:
                     print("Failed to determine gem color. This should never happen.")
-            print(color + " " + game)
-            if color == "oise":
-                print(color + " is broken")
             return(newDataBlock,color)
 
 
@@ -103,19 +144,29 @@ class ImportMis:
         # run misString.find last so its value is checked before the while loop runs again
         while(itemIndex != -1):
             # indexes of all the values we need to store and use in blender
+            isGem = False
             dtsSkin = None
             itemPositionIndex = misString.find("position", itemIndex)
             itemRotationIndex = misString.find("rotation", itemIndex)
             itemScaleIndex = misString.find("scale", itemIndex)
             dtsSkinIndex = misString.find("skin", itemIndex)
-            if string == "TSStatic":
+            if string == "TSStatic(":
                 itemFileIndex = misString.find("shapeName", itemIndex)
+                if itemFileIndex == -1:
+                    itemFileIndex = misString.find("shapename", itemIndex)
                 isDts = True
-            elif string == "InteriorInstance":
+            elif string == "InteriorInstance(":
                 itemFileIndex = misString.find("interiorFile", itemIndex)
+                if itemFileIndex == -1:
+                    itemFileIndex = misString.find("interiorfile", itemIndex)
                 isDts = False
+            # elif string == "PathedInterior":
+            #     itemFileIndex = misString.find("interiorResource", itemIndex)
+            #     isDts = False
             else:
                 dtsDataBlockIndex = misString.find("dataBlock", itemIndex)
+                if dtsDataBlockIndex == -1:
+                    dtsDataBlockIndex = misString.find("datablock", itemIndex)
                 isDts = True
             itemIndexEnd = misString.find("};", itemIndex)
             # misString[start:end] where start = the next quotation mark after the position index + 1 (so we don't keep the quote in InteriorPosition), 
@@ -126,68 +177,53 @@ class ImportMis:
             if (not dtsSkinIndex > itemIndexEnd) and (dtsSkinIndex != -1):
                 dtsSkin = misString[get_next_quote(misString, dtsSkinIndex) + 1:get_next_quote(misString, get_next_quote(misString, dtsSkinIndex) + 1)]
             # this one does + 3 instead of + 1 to trim the ~/ from the start of the path
-            if string == "TSStatic" or string == "InteriorInstance":
+            if string == "TSStatic(" or string == "InteriorInstance(":
                 itemFile = misString[get_next_quote(misString, itemFileIndex) + 3:get_next_quote(misString, get_next_quote(misString, itemFileIndex) + 3)]
                 itemFilePath = Path(activeMisDataPath + itemFile)
+            # PathedInteriors don't have the ~ at the start of the path so add 2 instead of 3
+            # elif string == "PathedInterior":
+            #     itemFile = misString[get_next_quote(misString, itemFileIndex) + 2:get_next_quote(misString, get_next_quote(misString, itemFileIndex) + 2)]
+            #     itemFilePath = Path(activeMisDataPath + itemFile)
             # most DTSes are special and need to have a datablock found instead and resolved to an interior file
             else:
                 dtsDataBlock = misString[get_next_quote(misString, dtsDataBlockIndex) + 1:get_next_quote(misString, get_next_quote(misString, dtsDataBlockIndex) + 1)]
                 if dtsDataBlock.find("GemItem") != -1:
                     dtsDataBlock,dtsSkin = get_gem_item(dtsDataBlock,rand)
+                    isGem = True
+                # theres 6 different things the beginning of the block can be called so i have to check for all of them
                 scriptStringDtsIndex = scriptString.find("ItemData(" + dtsDataBlock)
-                scriptStringDtsIndex = scriptString.find("StaticShapeData(" + dtsDataBlock) if scriptStringDtsIndex == -1 else scriptStringDtsIndex
-                scriptStringDtsIndex = scriptString.find("StaticShapeData(" + str.capitalize(dtsDataBlock)) if scriptStringDtsIndex == -1 else scriptStringDtsIndex
+                if scriptStringDtsIndex == -1:
+                    scriptStringDtsIndex = scriptString.find("StaticShapeData(" + dtsDataBlock)
+                    if scriptStringDtsIndex == -1:
+                        scriptStringDtsIndex = scriptString.find("StaticShapeData(" + str.capitalize(dtsDataBlock))
+                        if scriptStringDtsIndex == -1:
+                            scriptStringDtsIndex = misString.find("ItemData()" + dtsDataBlock)
+                            if scriptStringDtsIndex == -1:
+                                scriptStringDtsIndex = misString.find("StaticShapeData(" + dtsDataBlock)
+                                if scriptStringDtsIndex == -1:
+                                    scriptStringDtsIndex = misString.find("StaticShapeData(" + str.capitalize(dtsDataBlock))
                 scriptStringDtsShapeFileIndex = scriptString.find("shapeFile",scriptStringDtsIndex)
-                itemFile = scriptString[get_next_quote(scriptString, scriptStringDtsShapeFileIndex) + 3:get_next_quote(scriptString, get_next_quote(scriptString, scriptStringDtsShapeFileIndex) + 3)]
+                itemFile = scriptString[get_next_quote(scriptString, scriptStringDtsShapeFileIndex) + 1:get_next_quote(scriptString, get_next_quote(scriptString, scriptStringDtsShapeFileIndex) + 1)]
+                # for some reason HelpBubbles (and maybe other dtses idk) have their filepath start with platinum/ instead of ~/ or /. god knows why
+                itemFile = itemFile[itemFile.find("data"):] if itemFile.find("data") != 0 else itemFile
                 itemFilePath = Path(activeMisDataPath + itemFile)
+            if len(str(itemFilePath)) > 200:
+                print(itemFilePath)
             fileTemp = Path(itemFilePath)
             itemName = fileTemp.name
-            objList.append(dict(position = itemPosition, rotation = itemRotation, scale = itemScale, file = itemFilePath, skin = dtsSkin, name = itemName, dts = isDts))
+            if itemName == " " or itemName == "s":
+                print(itemName)
+            objList.append(dict(position = itemPosition, rotation = itemRotation, scale = itemScale, file = itemFilePath, skin = dtsSkin, name = itemName, dts = isDts, gem = isGem))
             itemIndex = misString.find(string, itemIndexEnd)
         return objList
-
-    # # thanks to testure on blenderartists.org for this function
-    # def get_layer_collection(collection, view_layer=None):
-    # # Returns the view layer LayerCollection for a specificied Collection
-    #     def scan_children(lc, result=None):
-    #         for c in lc.children:
-    #             if c.collection == collection:
-    #                 return c
-    #             result = scan_children(c, result)
-    #         return result
-
-    #     if view_layer is None:
-    #         view_layer = bpy.context.view_layer
-    #     return scan_children(view_layer.layer_collection)
-    
-    # mis import configs
-    include_path_triggers = False
-    include_path_nodes = False
-    include_static_interiors = True
-    include_pathed_interiors = False
-    include_game_entities = False
-    include_dts = True
-    include_dif = True
-    include_item = True
-    include_tsstatic = True
-    include_static_shape = True
-    attempt_to_fix_transparency = True
-    random_gems = True
-    allowIllegalMbuGems = False
-    allowPlatinumGems = False
-    deleteDtsCol = True
-    # dts import configs
-    reference_keyframe = False
-    import_sequences = False
-    use_armature = False
-    debug_report = False
     # other initialization
     numPathNodesRemoved = 0
+    fakeColmesh = str(Path(os.path.realpath(__file__)).parent) + r"\cube.dif"
     stringsToSearchFor = []
     stringsToSearchFor.append("Item()") if include_item == True and include_dts == True else None
-    stringsToSearchFor.append("TSStatic") if include_tsstatic == True and include_dts == True else None
-    stringsToSearchFor.append("StaticShape") if include_static_shape == True and include_dts == True else None
-    stringsToSearchFor.append("InteriorInstance") if include_dif == True else None
+    stringsToSearchFor.append("TSStatic(") if include_tsstatic == True and include_dts == True else None
+    stringsToSearchFor.append("StaticShape(") if include_static_shape == True and include_dts == True else None
+    stringsToSearchFor.append("InteriorInstance(") if include_dif == True else None
     listOfActiveLayerCollections = []
     for layerCollection in bpy.context.view_layer.layer_collection.children:
         if layerCollection.exclude == False:
@@ -214,7 +250,7 @@ class ImportMis:
             for collection in oldCollectionsChildObject:
                 collection.objects.unlink(childObject)
     # open mis and find interiors and stuff
-    misPath = Path(r"S:\downloads\PlatinumQuest-Dev-master\PlatinumQuest-Dev-master\Marble Blast Platinum\platinum\data\missions\custom\gemdtstest.mis")
+    misPath = filepath
     activeMis = open(misPath)
     activeMisName = os.path.basename(activeMis.name)
     # create a collection to put all the imported stuff into
@@ -226,7 +262,7 @@ class ImportMis:
     misString = activeMis.read()
     activeMis.close
     scriptMegaString = " "
-    scriptFileList = glob.glob(str(activeMisScriptsPath)+"\*.cs", recursive=False)
+    scriptFileList = glob.glob(str(activeMisScriptsPath)+"\**\*.cs", recursive=True)
     for file in scriptFileList:
         csFile = Path(file).open()
         newScript = csFile.read()
@@ -241,13 +277,35 @@ class ImportMis:
     for item in itemList:
         # if not a dts then don't use the dts importer
         if include_path_nodes == False and Path(item["file"]).name == "pathnode.dts":
+            print("Removed a PathNode. Total items to import is now " + str((len(itemList) - numPathNodesRemoved)))
             numPathNodesRemoved = numPathNodesRemoved + 1
             continue
         if str(item["name"]).find(".dts") == -1:
-            io_dif.import_dif.load(context = bpy.context, filepath = item["file"])
+            try: 
+                print("importing",item["name"])
+                io_dif.import_dif.load(context = bpy.context, filepath = item["file"])
+                print("imported",item["name"],"successfully")
+            except:
+                print(item["name"])
+                print("import_dif failed on item #" + str(itemList.index(item)) + "! Item name:",str(item["name"]))
+                failedDif.append(item["name"])
         else:
-            io_scene_dts.import_dts.load(operator = bpy.types.Operator, context = bpy.context, filepath = item["file"], reference_keyframe=reference_keyframe,
-                import_sequences=import_sequences,use_armature=use_armature,debug_report=debug_report)
+            try: 
+                print("importing",item["name"])
+                if item["name"] != "pack1marble.dts":
+                    io_scene_dts.import_dts.load(operator, context, filepath = item["file"], reference_keyframe=reference_keyframe,
+                    import_sequences=import_sequences,use_armature=use_armature,debug_report=debug_report)
+                    print("imported",item["name"],"successfully")
+                else:
+                    print("pack1marble.dts is known to freeze the importer for some reason. You will need to add it manually. A placeholder has been placed instead.")
+                    io_dif.import_dif.load(context = bpy.context, filepath = fakeColmesh)
+            except:
+                if item["name"] == "colmesh.dts":
+                    print("io_scene_dts cannot import colmesh.dts. An equivalent will be created with a Blender cube")
+                    io_dif.import_dif.load(context = bpy.context, filepath = fakeColmesh)                 
+                else:
+                    print("import_dts failed on item #" + str(itemList.index(item)) + "! Item name:",item["name"])
+                    failedDts.append(item["name"])
         itemObject = bpy.data.objects.new(item["name"], None)
         # print(difObject.name)
         bpy.context.scene.collection.objects.link(itemObject)
@@ -278,13 +336,20 @@ class ImportMis:
             # delete item types that were disabled
             if include_static_interiors == False and child.dif_props.interior_type == "static_interior" and itemObject.name.find(".dif") != -1:
                 bpy.data.objects.remove(child)
-            if include_pathed_interiors == False and ((child.dif_props.interior_type == "pathed_interior") or (child.type == "CURVE" and itemObject.name.find(".dif") != -1)):
+                continue
+            if child != None and include_pathed_interiors == False and ((child.dif_props.interior_type == "pathed_interior") or (child.type == "CURVE" and itemObject.name.find(".dif") != -1)):
                 bpy.data.objects.remove(child)
-            if include_game_entities == False and child.dif_props.interior_type == "game_entity":
+                continue
+            if child != None and include_game_entities == False and child.dif_props.interior_type == "game_entity":
                 bpy.data.objects.remove(child)
-            if include_path_triggers == False and child.dif_props.interior_type == "path_trigger":
+                continue
+            if child != None and include_path_triggers == False and child.dif_props.interior_type == "path_trigger":
                 bpy.data.objects.remove(child)
-            if deleteDtsCol == True and itemObject.name.find(".dts") != -1 and str.casefold(child.name).find(str.casefold("Col")) != -1:
+                continue
+            if child != None and deleteDtsCol == True and itemObject.name.find(".dts") != -1 and str.casefold(child.name).find(str.casefold("Col")) != -1:
+                bpy.data.objects.remove(child)
+                continue
+            if child != None and onlyHighestLod == True and itemObject.name.find(".dts") != -1 and str.casefold(child.name).find(str.casefold("detail")) != -1:
                 bpy.data.objects.remove(child)
             else:
                 if item["dts"] == True and len(child.material_slots) != 0:
@@ -306,7 +371,9 @@ class ImportMis:
                                 texNode = textureNode
                                 imagePath = str(textureNode.image.filepath)
                                 newImagePath = imagePath.replace("base",str(item["skin"])) if str(item["skin"]) != "pink" else imagePath
-                                textureNode.image = bpy.data.images.load(newImagePath)
+                                try: textureNode.image = bpy.data.images.load(newImagePath)
+                                except:
+                                    print(newImagePath,"doesn't exist. This was probably a secondary skin such as the grass present around some PQ signs")
                             if textureNode.bl_idname == "ShaderNodeBsdfPrincipled":
                                 bsdfNode = textureNode
                         material_check(texNode,renameMaterial,matOldName,item,bsdfNode,attempt_to_fix_transparency)
@@ -320,6 +387,8 @@ class ImportMis:
                         if texNode == None:
                             print(texNode)
                         material_check(texNode,mat,matOldName=(mat.name),item=item,bsdfNode=bsdfNode,attempt_to_fix_transparency=attempt_to_fix_transparency,onlyTransparency=onlyTransparency)
+                    if child.type == "MESH":
+                        for polygon in child.data.polygons: polygon.use_smooth = True
                 oldCollectionsChild = child.users_collection
                 finishedCollection.objects.link(child)
                 finishedCollection.instance_offset = child.location
@@ -342,7 +411,47 @@ class ImportMis:
     bpy.data.collections.remove(tempCollection)
     for layerCollection in listOfActiveLayerCollections:
         layerCollection.exclude = False
+    return ({"FINISHED"},failedDif,failedDts)
 
+class ImportMis:
+    mis = r"S:\downloads\PlatinumQuest-Dev-master\PlatinumQuest-Dev-master\Marble Blast Platinum\platinum\data\lbmissions_pq\test\*.mis"
+    mcs = r"S:\downloads\PlatinumQuest-Dev-master\PlatinumQuest-Dev-master\Marble Blast Platinum\platinum\data\lbmissions_pq\test\*.mcs"
+    filesList = glob.glob(mis, recursive=False)
+    filesListTwo = glob.glob(mcs, recursive=False)
+    errorDif = []
+    errorDts = []
+    failedDif = []
+    failedDts = []
+    bub = {}
+    print("started import")
+    for filepath in filesList:      
+        print("loading",filepath)
+        bub, failedDif, failedDts = load(operator=bpy.types.Operator, context=bpy.context, filepath=filepath)
+        errorDts.extend(failedDif)
+        errorDif.extend(failedDts)
+        for child in bpy.context.scene.collection.children_recursive:
+            print("removing object",str(bpy.context.scene.collection.children_recursive.index(child) + 1),"of",str(len(bpy.context.scene.collection.children_recursive)))
+            try: bpy.data.objects.remove(child)
+            except: 
+                for object in child.objects:
+                    bpy.data.objects.remove(object)
+                bpy.data.collections.remove(object)
+
+    for filepath in filesListTwo:
+        print("loading",filepath)
+        bub, failedDif, failedDts = load(operator=bpy.types.Operator, context=bpy.context, filepath=filepath)
+        errorDts.extend(failedDif)
+        errorDif.extend(failedDts)
+        for child in bpy.context.scene.collection.children_recursive:
+            print("removing objects...")
+            try: bpy.data.objects.remove(child)
+            except: 
+                for object in child.objects:
+                    bpy.data.objects.remove(object)
+                bpy.data.collections.remove(child)
+
+    print(len(errorDif),"dif and",len(errorDts),"dts failed to import properly!")
+    print("Failed imports:",errorDif,errorDts)
         
 
 
