@@ -1,0 +1,1121 @@
+      new StaticShape() {
+         position = "8 0 3";
+         rotation = "1 0 0 0";
+         scale = "0 0 0";
+         dataBlock = "HelpBubble";
+      };
+      new StaticShape(CameraPath1) {
+         position = "7.49958 12.1757 13.0598";
+         rotation = "0.571796 0.571341 -0.588744 118.986";
+         scale = "1 1 1";
+         dataBlock = "PathNode";
+            nextNode = "CameraPath2";
+            placed = "1";
+            reverseRotation = "0";
+            smooth = "1";
+            timeToNext = "15000";
+            usePosition = "1";
+            useRotation = "1";
+            useScale = "0";
+      };
+      new StaticShape(CameraPath2) {
+         position = "6.74336 139.176 13.0665";
+         rotation = "0.571796 0.571341 -0.588744 118.986";
+         scale = "1 1 1";
+         dataBlock = "PathNode";
+            nextNode = "CameraPath1";
+            placed = "1";
+            reverseRotation = "0";
+            smooth = "1";
+            timeToNext = "15000";
+            usePosition = "1";
+            useRotation = "1";
+            useScale = "0";
+      };
+   new StaticShape(StartPoint) {
+      position = "8 0 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      dataBlock = "StartPad";
+   };
+   new StaticShape(EndPoint) {
+      position = "12 152 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      dataBlock = "EndPad";
+   };
+   new InteriorInstance() {
+      position = "0 0 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileB.dif";
+ 
+   };
+   new InteriorInstance() {
+      position = "0 4 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+ 
+   };
+   new InteriorInstance() {
+      position = "0 8 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileY.dif";
+ 
+   };
+   new InteriorInstance() {
+      position = "0 12 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 16 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 20 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileP.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 24 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 28 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileY.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 32 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 36 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 40 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileY.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 44 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 48 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 52 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 56 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 60 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileO.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 64 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileY.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 68 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 72 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 76 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileO.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 80 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 84 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileY.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 88 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 92 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileY.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 96 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileY.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 100 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 104.001 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 108 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileB.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 112 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileY.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 116 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileB.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 120 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileO.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 124 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 128 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 132 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 136 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 140 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 144 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 148 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+
+   };
+   new InteriorInstance() {
+      position = "0 152 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 0 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 4 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileO.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 8 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileP.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 12 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileB.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 16 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileO.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 20 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 24 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 28 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileB.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 32 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileY.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 36 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 40 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 44 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileB.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 48 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileB.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 52 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileB.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 56 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 60 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 64 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 68 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 72 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 76 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 80 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileO.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 84 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 88 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 92 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 96 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileP.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 100 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileO.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 104 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileB.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 108 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileO.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 112 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileP.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 116 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileP.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 120 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 124 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileB.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 128 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 132 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 136 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 140 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 144 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 148 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+
+   };
+   new InteriorInstance() {
+      position = "4 152 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 0 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 4 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 8 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 12 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 16 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileB.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 20 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileB.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 24 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 28 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileO.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 32 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 36 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 40 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileB.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 44 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileP.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 48 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 52 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 56 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileY.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 60 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 64 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileP.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 68 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileO.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 72 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileP.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 76 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileY.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 80 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileP.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 84 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileP.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 88 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 92 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 96 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 100 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileO.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 104 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileB.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 108 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileP.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 112 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileP.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 116 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileB.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 120 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileY.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 124 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 128 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 132 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 136 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 140 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 144 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 148 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+
+   };
+   new InteriorInstance() {
+      position = "8 152 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 0 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 4 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileY.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 8 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileB.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 12 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileY.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 16 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 20 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 24 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 28 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileO.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 32 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileP.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 36 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileP.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 40 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileO.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 44 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 48 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 52 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileO.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 56 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 60 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileO.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 64 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 68 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileB.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 72 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileB.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 76 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 80 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileO.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 84 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileB.dif";
+
+   };
+   new InteriorInstance() {
+      position = "12 88 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+   };
+   new InteriorInstance() {
+      position = "12 92 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileO.dif";
+   };
+   new InteriorInstance() {
+      position = "12 96 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+   };
+   new InteriorInstance() {
+      position = "12 100 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileB.dif";
+   };
+   new InteriorInstance() {
+      position = "12 104 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileP.dif";
+   };
+   new InteriorInstance() {
+      position = "12 108 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileO.dif";
+   };
+   new InteriorInstance() {
+      position = "12 112 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileY.dif";
+   };
+   new InteriorInstance() {
+      position = "12 116 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileB.dif";
+   };
+   new InteriorInstance() {
+      position = "12 120 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+   };
+   new InteriorInstance() {
+      position = "12 124 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileK.dif";
+   };
+   new InteriorInstance() {
+      position = "12 128 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+   };
+   new InteriorInstance() {
+      position = "12 132 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+   };
+   new InteriorInstance() {
+      position = "12 136 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+   };
+   new InteriorInstance() {
+      position = "12 140 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+   };
+   new InteriorInstance() {
+      position = "12 144 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileR.dif";
+   };
+   new InteriorInstance() {
+      position = "12 148 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+   };
+   new InteriorInstance() {
+      position = "12 152 0";
+      rotation = "1 0 0 0";
+      scale = "1 1 1";
+      interiorFile = "~/data/interiors_pq/bonus/tilemaze/tileG.dif";
+   };
