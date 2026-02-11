@@ -14,10 +14,12 @@ from bpy_extras.io_utils import (ImportHelper)
 bl_info = {
     "name": "Import mis",
     "author": "MBCollector672",
-    "description": "mis/mcs (Marble Blast mission file) importer for Blender",
-    "blender": (4,5,0),
     "version": (1,0,0),
+    "blender": (4,5,6),
     "location": "File > Import-Export",
+    "description": "mis/mcs (Marble Blast mission file) importer for Blender",
+    "warning": "",
+    "doc_url": "",
     "category": "Import-Export",
 
 }
