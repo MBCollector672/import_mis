@@ -39,6 +39,7 @@ Download the plugin from releases and install it as you would any other Blender 
 
 ## Known issues/limitations
 
+- Untested on Mac/Linux
 - A few uncommon DTS files do not import correctly
 - pack1marble.dts and pack2marble.dts freeze the DTS importer (no idea why, they import fine using io_scene_dts from Blender)
 - DTS LODs are usually not correctly deleted
