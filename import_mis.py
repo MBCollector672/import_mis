@@ -1,18 +1,13 @@
 import bpy
 import os
-import sys
 import math
 import glob
 import random
-import time
 import bmesh
-import operator
 from pathlib import Path
 # import io_dif
-from . import io_dif_v136
-from io_dif_v136 import import_dif
-from . import io_scene_dts_4X_fork
-from io_scene_dts_4X_fork import import_dts    
+from . import import_dts
+from . import import_dif
 
 def load(operator, context, filepath,
      # mis import configs
@@ -398,7 +393,7 @@ def load(operator, context, filepath,
         if str(item["name"]).find(".dts") == -1:
             try: 
                 print("importing",item["name"])
-                io_dif.import_dif.load(context = bpy.context, filepath = item["file"])
+                import_dif.load(context = bpy.context, filepath = item["file"])
                 print("imported",item["name"],"successfully")
                 # sometimes the mis has the incorrect path and PQ automatically corrects it so we need to account for that
             except FileNotFoundError as exception:
@@ -407,7 +402,7 @@ def load(operator, context, filepath,
                     for extension in gameExtensions:
                         newPath = Path(str(item["file"]).replace("interiors","interiors_" + extension))
                         try: 
-                            io_dif.import_dif.load(context = bpy.context, filepath = newPath)
+                            import_dif.load(context = bpy.context, filepath = newPath)
                             succeededFix = True
                             break
                         except FileNotFoundError as exception:
@@ -420,7 +415,7 @@ def load(operator, context, filepath,
                 if str(item["file"]).find(r"\'") != -1:
                     newPath = Path(str(item["file"]).replace(r"\'","'"))
                     try: 
-                        io_dif.import_dif.load(context = bpy.context, filepath = newPath)
+                        import_dif.load(context = bpy.context, filepath = newPath)
                         succeededFix = True
                     except FileNotFoundError as exception:
                         continue
@@ -442,27 +437,27 @@ def load(operator, context, filepath,
                 # if one of those is detected
                 print("importing",item["name"])
                 if item["name"] != "pack1marble.dts" and item["name"] != "pack2marble.dts":
-                    io_scene_dts.import_dts.load(operator, context, filepath = item["file"], reference_keyframe=reference_keyframe,
+                    import_dts.load(operator, context, filepath = item["file"], reference_keyframe=reference_keyframe,
                     import_sequences=import_sequences,use_armature=use_armature)
                     print("imported",item["name"],"successfully")
                     if (item["dataBlock"] == "EndPad_MBM" and use_mbu_pads == True) or item["dataBlock"] == "EndPad_MBU":
                         lightBeamPath = str(item["file"]).replace(item["name"],"lightbeam.dts")
-                        io_scene_dts.import_dts.load(operator, context, filepath = lightBeamPath, reference_keyframe=reference_keyframe,
+                        import_dts.load(operator, context, filepath = lightBeamPath, reference_keyframe=reference_keyframe,
                                                      import_sequences=import_sequences,use_armature=use_armature)
                         print("imported lightbeam.dts successfully")
                 else:
                     print(item["name"],"is known to freeze the mis importer for some reason. You will need to add it manually using io_scene_dts. A placeholder has been placed instead.")
-                    io_dif.import_dif.load(context = bpy.context, filepath = fakeColmesh)
+                    import_dif.load(context = bpy.context, filepath = fakeColmesh)
                     item["name"] = item["name"][:str(item["name"]).find(".dts")] + " (import_mis placeholder).dts"
                     # colmesh doesn't load so create a cube instead
             except:
                 if item["name"] == "colmesh.dts":
                     print("io_scene_dts cannot import colmesh.dts. An equivalent will be created with a Blender cube")
-                    io_dif.import_dif.load(context = bpy.context, filepath = fakeColmesh)
+                    import_dif.load(context = bpy.context, filepath = fakeColmesh)
                     item["name"] = "Colmesh (import_mis placeholder).dts"
                 elif item["name"] == "octahedron.dts":
                     print("io_scene_dts cannot import octahedron.dts. An equivalent will be created instead")
-                    io_dif.import_dif.load(context = bpy.context, filepath = octahedronDif)                 
+                    import_dif.load(context = bpy.context, filepath = octahedronDif)                 
                 else:
                     print("import_dts failed on item #" + str(itemList.index(item)) + "! Item name:",item["name"])
                     failedDts.append(item["name"])
@@ -690,7 +685,7 @@ def load(operator, context, filepath,
     bpy.data.collections.remove(tempCollection)
     for layerCollection in listOfActiveLayerCollections:
         layerCollection.exclude = False
-    return ({"FINISHED"},failedDif,failedDts)
+    return {"FINISHED"}
 
 # class ImportMis:
 #     start_time = time.time()

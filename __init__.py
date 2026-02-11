@@ -21,14 +21,14 @@ bl_info = {
     "warning": "",
     "doc_url": "",
     "category": "Import-Export",
-
 }
 
-class ImportMis:
+class ImportMis(bpy.types.Operator, ImportHelper):
     bl_idname = "import_scene.mis"
     bl_label = "Import Marble Blast .mis"
     bl_options = {"REGISTER", "UNDO"}
 
+    filename_ext = ".mis"
     filter_glob: StringProperty(
     default="*.mis",
     options={"HIDDEN"},
@@ -36,7 +36,7 @@ class ImportMis:
 
     include_dif: BoolProperty(
     name="Include DIF",
-    description="Include DIF models, which include interiors and moving platforms"
+    description="Include DIF models, which include interiors and moving platforms",
     default=True,
     )
 
@@ -48,7 +48,7 @@ class ImportMis:
 
     include_static_interiors: BoolProperty(
     name="Include Static Interiors",
-    description="Include interiors that do not move"
+    description="Include interiors that do not move",
     default=True,
     )
 
@@ -138,7 +138,7 @@ class ImportMis:
 
     try_only_highest_lod: BoolProperty(
     name="Only Highest LOD",
-    description="Tries to import only the highest level of detail for DTS files. Very inconsistent at the moment"
+    description="Tries to import only the highest level of detail for DTS files. Very inconsistent at the moment",
     default=True,
     )
 
@@ -150,13 +150,13 @@ class ImportMis:
 
     use_mbu_pads: BoolProperty(
     name="Use MBU Pads",
-    description="Use MBU pads when importing MBU levels. By default, these levels will import MBM pads and MBP checkpoints."
+    description="Use MBU pads when importing MBU levels. By default, these levels will import MBM pads and MBP checkpoints.",
     default=True,
     )
 
     # dts import configs
     reference_keyframe: BoolProperty(
-    name="DTS Import: Reference Keyframes"
+    name="DTS Import: Reference Keyframes",
     description="Reference animation stored in the DTS file. Can mess up moving DTS files around.",
     default=False,
     )
@@ -179,11 +179,12 @@ class ImportMis:
         keywords = self.as_keywords(ignore=("filter_glob", "split_mode"))
         return import_mis.load(self, context, **keywords)
     
-class ImportMcs:
+class ImportMcs(bpy.types.Operator, ImportHelper):
     bl_idname = "import_scene.mcs"
     bl_label = "Import PlatinumQuest .mcs"
     bl_options = {"REGISTER", "UNDO"}
 
+    filename_ext = ".mcs"
     filter_glob: StringProperty(
     default="*.mcs",
     options={"HIDDEN"},
@@ -191,7 +192,7 @@ class ImportMcs:
 
     include_dif: BoolProperty(
     name="Include DIF",
-    description="Include DIF models, which include interiors and moving platforms"
+    description="Include DIF models, which include interiors and moving platforms",
     default=True,
     )
 
@@ -203,7 +204,7 @@ class ImportMcs:
 
     include_static_interiors: BoolProperty(
     name="Include Static Interiors",
-    description="Include interiors that do not move"
+    description="Include interiors that do not move",
     default=True,
     )
 
@@ -293,7 +294,7 @@ class ImportMcs:
 
     try_only_highest_lod: BoolProperty(
     name="Only Highest LOD",
-    description="Tries to import only the highest level of detail for DTS files. Very inconsistent at the moment"
+    description="Tries to import only the highest level of detail for DTS files. Very inconsistent at the moment",
     default=True,
     )
 
@@ -305,13 +306,13 @@ class ImportMcs:
 
     use_mbu_pads: BoolProperty(
     name="Use MBU Pads",
-    description="Use MBU pads when importing MBU levels. By default, these levels will import MBM pads and MBP checkpoints."
+    description="Use MBU pads when importing MBU levels. By default, these levels will import MBM pads and MBP checkpoints.",
     default=True,
     )
 
     # dts import configs
     reference_keyframe: BoolProperty(
-    name="DTS Import: Reference Keyframes"
+    name="DTS Import: Reference Keyframes",
     description="Reference animation stored in the DTS file. Can mess up moving DTS files around.",
     default=False,
     )
@@ -343,14 +344,14 @@ def menu_func_import_mcs(self, context):
 def register():
     bpy.utils.register_class(ImportMis)
     bpy.utils.register_class(ImportMcs)
-    bpy.types.TOPBAR_MT_FILE_import.append(menu_func_import_mis)
-    bpy.types.TOPBAR_MT_FILE_import.append(menu_func_import_mcs)
+    bpy.types.TOPBAR_MT_file_import.append(menu_func_import_mis)
+    bpy.types.TOPBAR_MT_file_import.append(menu_func_import_mcs)
 
 def unregister():
     bpy.utils.unregister_class(ImportMis)
     bpy.utils.unregister_class(ImportMcs)
-    bpy.types.TOPBAR_MT_FILE_import.remove(menu_func_import_mis)
-    bpy.types.TOPBAR_MT_FILE_import.remove(menu_func_import_mcs)
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import_mis)
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import_mcs)
     
 if __name__ == "__main__":
     register()
