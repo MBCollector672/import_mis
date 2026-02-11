@@ -8,7 +8,7 @@ import mathutils
 from .hxDif import *
 from bpy_extras.io_utils import unpack_list
 from bpy_extras.image_utils import load_image
-from .util import default_materials, resolve_texture, get_rgb_colors
+from .dif_util import default_materials, resolve_texture, get_rgb_colors
 
 from bpy_extras.wm_utils.progress_report import ProgressReport, ProgressReportSubstep
 
