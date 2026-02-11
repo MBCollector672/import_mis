@@ -1,4 +1,5 @@
 This text is included pursuant to the obligations of an upstream license and must be retained in any derivatives, but it is not the licence applicable to this code
+Specifically, it applies to DtsShape.py, DtsTypes.py, write_report.py, dts_util.py, and import_dts.py
 
 The MIT License (MIT)
 
