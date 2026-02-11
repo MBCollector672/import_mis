@@ -9,40 +9,37 @@ import bmesh
 import operator
 from pathlib import Path
 # import io_dif
-ioDifPath = bpy.utils.user_resource('SCRIPTS', path="addons")
-sys.path.append(ioDifPath)
-import io_dif
-from io_dif import import_dif
-import io_scene_dts
-from io_scene_dts import import_dts    
+from . import io_dif_v136
+from io_dif_v136 import import_dif
+from . import io_scene_dts_4X_fork
+from io_scene_dts_4X_fork import import_dts    
 
 def load(operator, context, filepath,
      # mis import configs
-    include_path_triggers = False,
-    include_path_nodes = False,
+    include_dif = True,
+    include_dts = True,
     include_static_interiors = True,
     include_pathed_interiors = True,
+    include_path_triggers = False,
     include_game_entities = False,
-    include_dts = True,
-    include_dif = True,
+    get_pathed_interiors_from_mis = True,
+    get_pathed_interior_by_name = True,
     include_item = True,
-    include_tsstatic = True,
     include_static_shape = True,
+    include_tsstatic = True,
+    include_path_nodes = False,
     attempt_to_fix_transparency = True,
     random_gems = True,
     allow_illegal_mbu_gems = False,
     allow_platinum_gems = False,
     delete_dts_col = True,
     try_only_highest_lod = True,
-    get_pathed_interiors_from_mis = True,
-    get_pathed_interior_by_name = True,
     recalculate_dts_normals = True,
     use_mbu_pads = True,
     # dts import configs
     reference_keyframe = False,
     import_sequences = False,
     use_armature = False,
-    debug_report = False
     ):
     failedDif = []
     failedDts = []
@@ -446,12 +443,12 @@ def load(operator, context, filepath,
                 print("importing",item["name"])
                 if item["name"] != "pack1marble.dts" and item["name"] != "pack2marble.dts":
                     io_scene_dts.import_dts.load(operator, context, filepath = item["file"], reference_keyframe=reference_keyframe,
-                    import_sequences=import_sequences,use_armature=use_armature,debug_report=debug_report)
+                    import_sequences=import_sequences,use_armature=use_armature)
                     print("imported",item["name"],"successfully")
                     if (item["dataBlock"] == "EndPad_MBM" and use_mbu_pads == True) or item["dataBlock"] == "EndPad_MBU":
                         lightBeamPath = str(item["file"]).replace(item["name"],"lightbeam.dts")
                         io_scene_dts.import_dts.load(operator, context, filepath = lightBeamPath, reference_keyframe=reference_keyframe,
-                                                     import_sequences=import_sequences,use_armature=use_armature,debug_report=debug_report)
+                                                     import_sequences=import_sequences,use_armature=use_armature)
                         print("imported lightbeam.dts successfully")
                 else:
                     print(item["name"],"is known to freeze the mis importer for some reason. You will need to add it manually using io_scene_dts. A placeholder has been placed instead.")
@@ -695,78 +692,78 @@ def load(operator, context, filepath,
         layerCollection.exclude = False
     return ({"FINISHED"},failedDif,failedDts)
 
-class ImportMis:
-    start_time = time.time()
-    mis = r"S:\downloads\PlatinumQuest-Dev-master\PlatinumQuest-Dev-master\Marble Blast Platinum\platinum\data\multiplayer\test\**\*.mis"
-    mcs = r"S:\downloads\PlatinumQuest-Dev-master\PlatinumQuest-Dev-master\Marble Blast Platinum\platinum\data\multiplayer\test\**\*.mcs"
-    # dif = r"S:\downloads\PlatinumQuest-Dev-master\PlatinumQuest-Dev-master\Marble Blast Platinum\platinum\data\**\*.dif"
-    # dts = r"S:\downloads\PlatinumQuest-Dev-master\PlatinumQuest-Dev-master\Marble Blast Platinum\platinum\data\**\*.dts"
-    filesList = glob.glob(mis, recursive=True)
-    filesList.extend(glob.glob(mcs, recursive=True))
-    # difList = glob.glob(dif, recursive=True)
-    # dtsList = glob.glob(dts, recursive=True)
-    errorDif = []
-    errorDts = []
-    failedDif = []
-    failedDts = []
-    bub = {}
-    baseCollection = bpy.context.scene.collection
-    originalCollectionObjects = list(baseCollection.objects)
-    for collection in originalCollectionObjects:
-        bpy.data.collections.remove(collection)
-    print("started import")
-    for filepath in filesList:      
-        print("loading",filepath)
-        bub, failedDif, failedDts = load(operator=bpy.types.Operator, context=bpy.context, filepath=filepath)
-        errorDts.extend(failedDts)
-        errorDif.extend(failedDif)
-        # for child in bpy.context.scene.collection.children_recursive:
-        #     print("removing objects...")
-        #     try: bpy.data.objects.remove(child)
-        #     except: 
-        #         for object in child.objects:
-        #             bpy.data.objects.remove(object)
-        #         bpy.data.collections.remove(child)
+# class ImportMis:
+#     start_time = time.time()
+#     mis = r"S:\downloads\PlatinumQuest-Dev-master\PlatinumQuest-Dev-master\Marble Blast Platinum\platinum\data\multiplayer\test\**\*.mis"
+#     mcs = r"S:\downloads\PlatinumQuest-Dev-master\PlatinumQuest-Dev-master\Marble Blast Platinum\platinum\data\multiplayer\test\**\*.mcs"
+#     # dif = r"S:\downloads\PlatinumQuest-Dev-master\PlatinumQuest-Dev-master\Marble Blast Platinum\platinum\data\**\*.dif"
+#     # dts = r"S:\downloads\PlatinumQuest-Dev-master\PlatinumQuest-Dev-master\Marble Blast Platinum\platinum\data\**\*.dts"
+#     filesList = glob.glob(mis, recursive=True)
+#     filesList.extend(glob.glob(mcs, recursive=True))
+#     # difList = glob.glob(dif, recursive=True)
+#     # dtsList = glob.glob(dts, recursive=True)
+#     errorDif = []
+#     errorDts = []
+#     failedDif = []
+#     failedDts = []
+#     bub = {}
+#     baseCollection = bpy.context.scene.collection
+#     originalCollectionObjects = list(baseCollection.objects)
+#     for collection in originalCollectionObjects:
+#         bpy.data.collections.remove(collection)
+#     print("started import")
+#     for filepath in filesList:      
+#         print("loading",filepath)
+#         bub, failedDif, failedDts = load(operator=bpy.types.Operator, context=bpy.context, filepath=filepath)
+#         errorDts.extend(failedDts)
+#         errorDif.extend(failedDif)
+#         # for child in bpy.context.scene.collection.children_recursive:
+#         #     print("removing objects...")
+#         #     try: bpy.data.objects.remove(child)
+#         #     except: 
+#         #         for object in child.objects:
+#         #             bpy.data.objects.remove(object)
+#         #         bpy.data.collections.remove(child)
 
-    # originalCollectionObjects = list(baseCollection.objects)
-    # for collection in originalCollectionObjects:
-    #     bpy.data.collections.remove(collection)
+#     # originalCollectionObjects = list(baseCollection.objects)
+#     # for collection in originalCollectionObjects:
+#     #     bpy.data.collections.remove(collection)
 
-    # for difFile in difList:
-    #     print("loading",difFile)
-    #     try: io_dif.import_dif.load(context=bpy.context, filepath=difFile)
-    #     except EOFError as exception: 
-    #         errorDif.append(difFile)
-    #         print(exception)
-    #     for child in bpy.context.scene.collection.children_recursive:
-    #         print("removing objects...")
-    #         try: bpy.data.objects.remove(child)
-    #         except: 
-    #             for object in child.objects:
-    #                 bpy.data.objects.remove(object)
-    #             bpy.data.collections.remove(child)
-    # print("Failed imports:",errorDif)
-    # for dtsFile in dtsList:
-    #     print("loading",dtsFile, Path(dtsFile).name)
-    #     if Path(dtsFile).name.find("pack") == -1 or Path(dtsFile).name.find("marble") == -1:
-    #         if dtsFile.find("snowball.dts") == -1:
-    #             try: io_scene_dts.import_dts.load(operator=bpy.types.Operator, context=bpy.context, filepath=dtsFile,reference_keyframe=False,
-    #                 import_sequences=False,use_armature=False,debug_report=False)
-    #             except: errorDts.append(dtsFile)
-    #             for child in bpy.context.scene.collection.children_recursive:
-    #                 print("removing objects...")
-    #                 try: bpy.data.objects.remove(child)
-    #                 except: 
-    #                     for object in child.objects:
-    #                         bpy.data.objects.remove(object)
-    #                     bpy.data.collections.remove(child)
-    #     else:
-    #         print("DTS is a packmarble, not importing")
+#     # for difFile in difList:
+#     #     print("loading",difFile)
+#     #     try: io_dif.import_dif.load(context=bpy.context, filepath=difFile)
+#     #     except EOFError as exception: 
+#     #         errorDif.append(difFile)
+#     #         print(exception)
+#     #     for child in bpy.context.scene.collection.children_recursive:
+#     #         print("removing objects...")
+#     #         try: bpy.data.objects.remove(child)
+#     #         except: 
+#     #             for object in child.objects:
+#     #                 bpy.data.objects.remove(object)
+#     #             bpy.data.collections.remove(child)
+#     # print("Failed imports:",errorDif)
+#     # for dtsFile in dtsList:
+#     #     print("loading",dtsFile, Path(dtsFile).name)
+#     #     if Path(dtsFile).name.find("pack") == -1 or Path(dtsFile).name.find("marble") == -1:
+#     #         if dtsFile.find("snowball.dts") == -1:
+#     #             try: io_scene_dts.import_dts.load(operator=bpy.types.Operator, context=bpy.context, filepath=dtsFile,reference_keyframe=False,
+#     #                 import_sequences=False,use_armature=False,debug_report=False)
+#     #             except: errorDts.append(dtsFile)
+#     #             for child in bpy.context.scene.collection.children_recursive:
+#     #                 print("removing objects...")
+#     #                 try: bpy.data.objects.remove(child)
+#     #                 except: 
+#     #                     for object in child.objects:
+#     #                         bpy.data.objects.remove(object)
+#     #                     bpy.data.collections.remove(child)
+#     #     else:
+#     #         print("DTS is a packmarble, not importing")
 
-    end_time = time.time()
-    print(end_time - start_time,"seconds elapsed")
-    print(len(errorDif),"dif and",len(errorDts),"dts failed to import properly!")
-    print("Failed imports:",errorDif,errorDts)
+#     end_time = time.time()
+#     print(end_time - start_time,"seconds elapsed")
+#     print(len(errorDif),"dif and",len(errorDts),"dts failed to import properly!")
+#     print("Failed imports:",errorDif,errorDts)
         
 
 
