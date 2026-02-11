@@ -5,6 +5,7 @@ import math
 import glob
 import random
 import time
+import bmesh
 import operator
 from pathlib import Path
 # import io_dif
@@ -35,6 +36,8 @@ def load(operator, context, filepath,
     try_only_highest_lod = True,
     get_pathed_interiors_from_mis = True,
     get_pathed_interior_by_name = True,
+    recalculate_dts_normals = True,
+    use_mbu_pads = True,
     # dts import configs
     reference_keyframe = False,
     import_sequences = False,
@@ -44,62 +47,76 @@ def load(operator, context, filepath,
     failedDif = []
     failedDts = []
     gameExtensions = ["mbp","mbg","mbu","pq"]
+    def text_node_check(mat):
+        nodes = bpy.data.materials[mat.name].node_tree.nodes
+        alreadyHasTexNode = False
+        for node in nodes:
+            if node.bl_idname == "ShaderNodeTexImage":
+                alreadyHasTexNode = True
+        return alreadyHasTexNode
+
     def get_item_num(list):
         try: return list["number"]
         except: return list["interiorIndex"]
-    def material_check(texNode,mat,matOldName,item,bsdfNode,attempt_to_fix_transparency,onlyTransparency = False,datablock = None):
+    def material_check(texNode,mat,matOldName,item,bsdfNode,attempt_to_fix_transparency,onlyTransparency = False,datablock = None, checkTexNode = False):
         fileExtensions = ["",".png",".jpg",".PNG",".JPG","_01.png", "_01.jpg", "_01.JPG", "_01.PNG"]
         if texNode == None and onlyTransparency == False:
-            texNode = mat.node_tree.nodes.new("ShaderNodeTexImage")
-            matOldName = matOldName[:matOldName.find("#")] if matOldName.find("#") != -1 else matOldName
-            imagePath = (str(Path(item["file"]).parent) + "\\" + matOldName)
-            print(imagePath)
-            if item["skin"] != "base" and item["skin"] != None:
-                newImagePath = str(imagePath).replace("base",str(item["skin"]))
-            else:
-                newImagePath = imagePath
-            if item["skin"] != None:
-                print(item["skin"])
-                try: texNode.image = bpy.data.images.load(newImagePath)
-                except:
-                    print("Skin",item["skin"],"at",newImagePath,"doesn't seem to exist. Using base skin instead")
-                    try: texNode.image = bpy.data.images.load(imagePath)
-                    except: 
-                        if datablock == "StartPad" or datablock == "EndPad" or datablock == "StartPad_MBG" or datablock == "EndPad_MBG":
-                            if matOldName == "whitegreen" or matOldName == "whiteblue":
-                                imagePath = (str(Path(item["file"]).parent)) + "\\white.jpg"
-                                texNode.image = bpy.data.images.load(imagePath)
-                            if matOldName == "greenwhite":
-                                imagePath = (str(Path(item["file"]).parent)) + "\\green.jpg"
-                                texNode.image = bpy.data.images.load(imagePath)
-                            if matOldName == "bluewhite":
-                                imagePath = (str(Path(item["file"]).parent)) + "\\blue.jpg"
-                                texNode.image = bpy.data.images.load(imagePath)
-                        print("No skin found at",imagePath)
-                bpy.data.materials[mat.name].node_tree.links.new(texNode.outputs["Color"], bsdfNode.inputs["Base Color"])
-            else:
-                # trash hacky fix for materials sometimes not having their file extension in the name
-                for fileExtension in fileExtensions:
-                    try: 
-                        texNode.image = bpy.data.images.load(imagePath + fileExtension)
-                        break
-                    except: 
-                        if fileExtensions.index(fileExtension) == len(fileExtensions) - 1:
-                            print("No image found at " + imagePath)
-                            nodes.remove(texNode)
-                            texNode = ""
-                            if item["name"].find("(import_mis placeholder)") != -1:
-                                bsdfNode.inputs["Base Color"].default_value = (231,0,225,255)
-                if texNode != "":
+        # sometimes the texture node fails to be recognized? either that or somewhere in the code sets it to none. it also fails to remove the texture node even though it
+        # recognizes that it exists after trying and failing to remove it. i don't understand why or how but it happens and this fixes it
+            alreadyHasTexNode = text_node_check(mat) if onlyTransparency == False and checkTexNode == True else None
+            if alreadyHasTexNode == False:
+                texNode = mat.node_tree.nodes.new("ShaderNodeTexImage")
+                matOldName = matOldName[:matOldName.find("#")] if matOldName.find("#") != -1 else matOldName
+                imagePath = (str(Path(item["file"]).parent) + "\\" + matOldName)
+                print(imagePath)
+                if item["skin"] != "base" and item["skin"] != None:
+                    newImagePath = str(imagePath).replace("base",str(item["skin"]))
+                else:
+                    newImagePath = imagePath
+                if item["skin"] != None:
+                    print(item["skin"])
+                    try: texNode.image = bpy.data.images.load(newImagePath)
+                    except:
+                        print("Skin",item["skin"],"at",newImagePath,"doesn't seem to exist. Using base skin instead")
+                        try: texNode.image = bpy.data.images.load(imagePath)
+                        except: 
+                            if datablock == "StartPad" or datablock == "EndPad" or datablock == "StartPad_MBG" or datablock == "EndPad_MBG":
+                                if matOldName == "whitegreen" or matOldName == "whiteblue":
+                                    imagePath = (str(Path(item["file"]).parent)) + "\\white.jpg"
+                                    print(texNode.image)
+                                    texNode.image = bpy.data.images.load(imagePath)
+                                if matOldName == "greenwhite":
+                                    imagePath = (str(Path(item["file"]).parent)) + "\\green.jpg"
+                                    texNode.image = bpy.data.images.load(imagePath)
+                                if matOldName == "bluewhite":
+                                    imagePath = (str(Path(item["file"]).parent)) + "\\blue.jpg"
+                                    texNode.image = bpy.data.images.load(imagePath)
+                            print("No skin found at",imagePath) if texNode.image == None else None
                     bpy.data.materials[mat.name].node_tree.links.new(texNode.outputs["Color"], bsdfNode.inputs["Base Color"])
-                    print("used image is" + str(texNode.image))
-        # couple of hacky fixes for weird transparency shenanigans
-        if texNode != "" and item["gem"] == True and texNode.image.name.find("gemshine") == -1:
+                else:
+                    # trash hacky fix for materials sometimes not having their file extension in the name
+                    for fileExtension in fileExtensions:
+                        try: 
+                            texNode.image = bpy.data.images.load(imagePath + fileExtension)
+                            break
+                        except: 
+                            if fileExtensions.index(fileExtension) == len(fileExtensions) - 1:
+                                print("No image found at " + imagePath)
+                                try: nodes.remove(texNode)
+                                except: print("Failed to remove",texNode)
+                                texNode = ""
+                                if item["name"].find("(import_mis placeholder)") != -1:
+                                    bsdfNode.inputs["Base Color"].default_value = (231,0,225,255)
+                    if texNode != "":
+                        bpy.data.materials[mat.name].node_tree.links.new(texNode.outputs["Color"], bsdfNode.inputs["Base Color"])
+                        print("used image is" + str(texNode.image))
+        # couple of fixes for weird transparency shenanigans
+        if texNode != "" and texNode != None and item["gem"] == True and texNode.image.name.find("gemshine") == -1:
             bpy.data.images[texNode.image.name].alpha_mode = 'NONE'
-        if texNode != "" and (texNode.image.name.find("finishback_01") != -1 or texNode.image.name.find("finishsign_01") != -1):
+        if texNode != "" and texNode != None and (texNode.image != None and texNode.image.name.find("finishback_01") != -1 or texNode.image != None and texNode.image.name.find("finishsign_01") != -1):
             bpy.data.images[texNode.image.name].alpha_mode = 'NONE'
         # turning on transparency if the prop is supposed to be transparent
-        if texNode != "" and mat.torque_props.use_transparency == True and attempt_to_fix_transparency == True:
+        if texNode != "" and texNode != None and mat.torque_props.use_transparency == True and attempt_to_fix_transparency == True:
             bpy.data.materials[mat.name].node_tree.links.new(texNode.outputs["Alpha"], bsdfNode.inputs["Alpha"])
 
     def find_in_file(misString, string, scriptString, activeMisDataPath, rand, allow_illegal_mbu_gems, allow_platinum_gems):
@@ -119,6 +136,16 @@ def load(operator, context, filepath,
             newDataBlock = None
             game = None
             # find the gem's type (game) and color (skin)
+            if str.casefold(dataBlock).find("candy") != -1:
+                color = str.casefold(dataBlock[9:])
+                if color == "red":
+                    color = "base"
+                elif color == "yellow":
+                    color = "orange"
+                elif color == "blue":
+                    color = "black"
+                # yes candy is technically a gem but the transparency on candy is actually needed and isGem tells the program to turn the transparency off if it's true
+                return (dataBlock,color,False)
             if dataBlock.find("Fancy") != -1:
                 color = str.casefold(dataBlock[12:])
             else:
@@ -159,7 +186,7 @@ def load(operator, context, filepath,
                         color = str(pqValidGems[random.randint(0,len(pqValidGems) - 1)])
                 case _:
                     print("Failed to determine gem color. This should never happen.")
-            return(newDataBlock,color)
+            return(newDataBlock,color,True)
 
 
         
@@ -189,7 +216,7 @@ def load(operator, context, filepath,
                 nextSimGroupIndex = misString.find(string,itemIndex + 1)
                 pathedInteriorIndex = str.casefold(misString).find("pathedinterior(",itemIndex)
                 # if the simgroup doesn't have a pathed interior then skip it
-                if pathedInteriorIndex < nextSimGroupIndex or (pathedInteriorIndex > 0 and nextSimGroupIndex < 0):
+                if (pathedInteriorIndex < nextSimGroupIndex and pathedInteriorIndex > 0 ) or (pathedInteriorIndex > 0 and nextSimGroupIndex < 0):
                     itemPositionIndex = str.casefold(misString).find("position", pathedInteriorIndex)
                     itemRotationIndex = str.casefold(misString).find("rotation", pathedInteriorIndex)
                     itemScaleIndex = str.casefold(misString).find("scale", pathedInteriorIndex)
@@ -204,10 +231,22 @@ def load(operator, context, filepath,
                     itemMarkerIndex = str.casefold(misString).find("marker(", itemPathIndex)
                     itemSeqNumIndex = str.casefold(misString).find("seqnum", itemMarkerIndex)
                     itemSeqNum = misString[get_next_quote(misString, itemSeqNumIndex) + 1:get_next_quote(misString, get_next_quote(misString,itemSeqNumIndex) + 1)]
-                    while int(itemSeqNum) != 0:
-                        itemMarkerIndex = str.casefold(misString).find("Marker(", itemMarkerIndex + 1)
+                    # sometimes paths don't start at seqNum 0, so get the settings of the lowest seqNum
+                    if itemSeqNum != 0:
+                        lowestNumberIndex = itemSeqNumIndex
+                        lowestSeqNum = itemSeqNum
+                        lowestSeqNumMarkerIndex = itemMarkerIndex
+                        itemMarkerIndex = str.casefold(misString).find("marker(", itemMarkerIndex + 1)
                         itemSeqNumIndex = str.casefold(misString).find("seqnum", itemMarkerIndex)
-                        itemSeqNum = misString[get_next_quote(misString, itemSeqNumIndex) + 1:get_next_quote(misString, get_next_quote(misString,itemSeqNumIndex) + 1)]
+                        while itemSeqNumIndex < nextSimGroupIndex and itemSeqNumIndex != -1:
+                            itemSeqNum = misString[get_next_quote(misString, itemSeqNumIndex) + 1:get_next_quote(misString, get_next_quote(misString,itemSeqNumIndex) + 1)]
+                            if itemSeqNum < lowestSeqNum:
+                                lowestNumberIndex = itemSeqNumIndex
+                                lowestSeqNum = itemSeqNum
+                                lowestSeqNumMarkerIndex = itemMarkerIndex
+                            itemMarkerIndex = str.casefold(misString).find("marker(", itemMarkerIndex + 1)
+                            itemSeqNumIndex = str.casefold(misString).find("seqnum", itemMarkerIndex)
+                        itemMarkerIndex = lowestSeqNumMarkerIndex
                     itemSmoothingTypeIndex = str.casefold(misString).find("smoothingtype",itemMarkerIndex)
                     itemSmoothingType = misString[get_next_quote(misString, itemSmoothingTypeIndex) + 1:get_next_quote(misString, get_next_quote(misString,itemSmoothingTypeIndex) + 1)]
                     isDts = False
@@ -225,18 +264,17 @@ def load(operator, context, filepath,
                 itemScale = misString[get_next_quote(misString, itemScaleIndex) + 1:get_next_quote(misString, get_next_quote(misString, itemScaleIndex) + 1)]
                 if (not dtsSkinIndex > itemIndexEnd) and (dtsSkinIndex != -1):
                     dtsSkin = misString[get_next_quote(misString, dtsSkinIndex) + 1:get_next_quote(misString, get_next_quote(misString, dtsSkinIndex) + 1)]
-                # this one does + 3 instead of + 1 to trim the ~/ from the start of the path
                 if string == "TSStatic(" or string == "InteriorInstance(":
-                    itemFile = misString[get_next_quote(misString, itemFileIndex) + 3:get_next_quote(misString, get_next_quote(misString, itemFileIndex) + 3)]
+                    itemFile = misString[get_next_quote(misString, itemFileIndex) + 1:get_next_quote(misString, get_next_quote(misString, itemFileIndex) + 1)]
+                    itemFile = itemFile[itemFile.find("data"):] if itemFile.find("data") != 0 else itemFile
                     itemFilePath = Path(activeMisDataPath + itemFile)
                 # most DTSes are special and need to have a datablock found instead and resolved to an interior file
                 elif string == "SimGroup(":
                     pass
                 else:
                     dtsDataBlock = misString[get_next_quote(misString, dtsDataBlockIndex) + 1:get_next_quote(misString, get_next_quote(misString, dtsDataBlockIndex) + 1)]
-                    if str.casefold(dtsDataBlock).find("gemitem") != -1:
-                        dtsDataBlock,dtsSkin = get_gem_item(dtsDataBlock,rand)
-                        isGem = True
+                    if str.casefold(dtsDataBlock).find("gemitem") != -1 or str.casefold(dtsDataBlock).find("candyitem") != -1:     
+                        dtsDataBlock,dtsSkin,isGem = get_gem_item(dtsDataBlock,rand)
                     # this game adores messing with capitalization for some reason so we gotta casefold everything
                     scriptStringDtsIndex = str.casefold(scriptString).find("itemdata(" + str.casefold(dtsDataBlock))
                     if scriptStringDtsIndex == -1:
@@ -245,7 +283,7 @@ def load(operator, context, filepath,
                             scriptStringDtsIndex = str.casefold(misString).find("staticshapedata(" + str.casefold(dtsDataBlock))
                             if scriptStringDtsIndex == -1:
                                 scriptStringDtsIndex = str.casefold(misString).find("itemdata(" + str.casefold(dtsDataBlock))
-                    # hardcoded fix for a few mbxp shapes being before the default ones in the script string for some reason
+                    # hardcoded fix for a few mbxp shapes being before the default shapes in the script string for some reason
                     if dtsDataBlock == "StartPad" or dtsDataBlock == "EndPad":
                         scriptStringDtsIndex = str.casefold(scriptString).find("staticshapedata(" + str.casefold(dtsDataBlock) + ")")
                     # hardcoded fix for mbg and mbp pads not loading their textures
@@ -258,6 +296,17 @@ def load(operator, context, filepath,
                     itemFilePath = Path(activeMisDataPath + itemFile)
                 fileTemp = Path(itemFilePath)
                 itemName = fileTemp.name
+                # fix mbu pads defaulting to mbm pads for some reason
+                if dtsDataBlock == "StartPad_MBM" or dtsDataBlock == "EndPad_MBM" and use_mbu_pads == True:
+                    itemFilePath = Path(str(itemFilePath).replace(itemName,"mbu\\"+ itemName))
+                # fixing checkpoint is a bit more involved
+                elif dtsDataBlock != None and str.casefold(dtsDataBlock) == "checkpoint" and isMBU == True and use_mbu_pads == True:
+                    checkPadPath = glob.glob(activeMisDataPath + "\\**\\pads\\checkpad.dts", recursive=True)
+                    itemFilePath = Path(checkPadPath[0])
+                    itemName == "checkpad.dts"
+                    tempScaleList = str.split(itemScale)
+                    for num in tempScaleList: tempScaleList[tempScaleList.index(num)] = float(num) * 2
+                    itemScale = (str(tempScaleList[0]) + " " + str(tempScaleList[1]) + " " + str(tempScaleList[2]))
                 if itemName == " ":
                     print(itemName)
                 objList.append(dict(position = itemPosition, rotation = itemRotation, scale = itemScale, file = itemFilePath, 
@@ -287,7 +336,6 @@ def load(operator, context, filepath,
     # move everything in the collection to a temporary collection
     tempCollection = bpy.data.collections.new("temporaryCollection")
     bpy.context.scene.collection.children.link(tempCollection)
-    # print(bpy.context.scene.collection.objects)
     baseCollection = bpy.context.scene.collection
     originalCollectionObjects = list(baseCollection.objects)
     originalCollections = None
@@ -315,6 +363,7 @@ def load(operator, context, filepath,
     activeMisDataPath = misPathString[0:misPathString.find("data")]
     activeMisScriptsPath = Path(activeMisDataPath + r"server\scripts")
     misString = activeMis.read()
+    isMBU = True if misString.find("game = \"Ultra\";") != -1 else False
     activeMis.close
     if activeMisName == "ColoredTileMaze.mcs":
         # i am not paid enough to deal with this
@@ -346,8 +395,8 @@ def load(operator, context, filepath,
     for item in itemList:
         # if not a dts then don't use the dts importer
         if include_path_nodes == False and Path(item["file"]).name == "pathnode.dts":
-            print("Removed a PathNode. Total items to import is now " + str((len(itemList) - numPathNodesRemoved)))
             numPathNodesRemoved = numPathNodesRemoved + 1
+            print("Removed a PathNode. Total items to import is now " + str((len(itemList) - numPathNodesRemoved)))
             continue
         if str(item["name"]).find(".dts") == -1:
             try: 
@@ -368,7 +417,7 @@ def load(operator, context, filepath,
                             continue
                         except:
                             print(item["file"])
-                            print("import_dif failed on item #" + str(itemList.index(item)) + "! Item name:",str(item["name"]),"Error:",exception)
+                            print("import_dif failed on item #" + str(itemList.index(item)) + "! Item name:",str(item["name"]))
                             failedDif.append(item["name"])
                 # ' in interior file paths has a \ added before it. this makes the path invalid so we need to see if this is happening and remove it
                 if str(item["file"]).find(r"\'") != -1:
@@ -380,11 +429,11 @@ def load(operator, context, filepath,
                         continue
                     except:
                         print(item["file"])
-                        print("import_dif failed on item #" + str(itemList.index(item)) + "! Item name:",str(item["name"]),"Error:",exception)
+                        print("import_dif failed on item #" + str(itemList.index(item)) + "! Item name:",str(item["name"]))
                         failedDif.append(item["name"])
                 if succeededFix == False:
                     print(item["file"])
-                    print("import_dif failed on item #" + str(itemList.index(item)) + "! Could not find file:",str(item["name"]),"Error:",exception)
+                    print("import_dif failed on item #" + str(itemList.index(item)) + "! Could not find file:",str(item["name"]))
                     failedDif.append(item["name"])
             except:
                 print(item["file"])
@@ -392,21 +441,29 @@ def load(operator, context, filepath,
                 failedDif.append(item["name"])
         else:
             try: 
+                # a few very specific dts files cause an infinite loop specifically when called from this script. loading through blender works fine. don't try to import
+                # if one of those is detected
                 print("importing",item["name"])
                 if item["name"] != "pack1marble.dts" and item["name"] != "pack2marble.dts":
                     io_scene_dts.import_dts.load(operator, context, filepath = item["file"], reference_keyframe=reference_keyframe,
                     import_sequences=import_sequences,use_armature=use_armature,debug_report=debug_report)
                     print("imported",item["name"],"successfully")
+                    if (item["dataBlock"] == "EndPad_MBM" and use_mbu_pads == True) or item["dataBlock"] == "EndPad_MBU":
+                        lightBeamPath = str(item["file"]).replace(item["name"],"lightbeam.dts")
+                        io_scene_dts.import_dts.load(operator, context, filepath = lightBeamPath, reference_keyframe=reference_keyframe,
+                                                     import_sequences=import_sequences,use_armature=use_armature,debug_report=debug_report)
+                        print("imported lightbeam.dts successfully")
                 else:
                     print(item["name"],"is known to freeze the mis importer for some reason. You will need to add it manually using io_scene_dts. A placeholder has been placed instead.")
                     io_dif.import_dif.load(context = bpy.context, filepath = fakeColmesh)
                     item["name"] = item["name"][:str(item["name"]).find(".dts")] + " (import_mis placeholder).dts"
+                    # colmesh doesn't load so create a cube instead
             except:
                 if item["name"] == "colmesh.dts":
                     print("io_scene_dts cannot import colmesh.dts. An equivalent will be created with a Blender cube")
                     io_dif.import_dif.load(context = bpy.context, filepath = fakeColmesh)
                     item["name"] = "Colmesh (import_mis placeholder).dts"
-                if item["name"] == "octahedron.dts":
+                elif item["name"] == "octahedron.dts":
                     print("io_scene_dts cannot import octahedron.dts. An equivalent will be created instead")
                     io_dif.import_dif.load(context = bpy.context, filepath = octahedronDif)                 
                 else:
@@ -444,7 +501,7 @@ def load(operator, context, filepath,
                                     prevObject = object
                                 elif itemNum > prevItemNum:
                                     bpy.data.objects.remove(object)
-                    if item["interiorIndex"] != None or (get_pathed_interior_by_name == True and pathedInteriorsWithMatchingNames != []):
+                    if item["interiorIndex"] != None or get_pathed_interior_by_name == True:
                         # this is the pathed interior so delete anything that isn't a mesh or curve
                         if object.type == "MESH":
                             itemNum = int(object.name[len("Object."):]) if len(object.name) > 6 else 0
@@ -455,10 +512,9 @@ def load(operator, context, filepath,
                         else:
                             bpy.data.objects.remove(object) if get_pathed_interior_by_name == False else None
 
-
         # remove every object that isn't the interiorIndex + 2-th greatest object number. example: if interiorIndex 0 then we remove all but the 2nd greatest object number
         # as the second imported object will be interiorIndex 0
-        if len(objectList) > 1:
+        if len(objectList) > 0:
             objectList.sort(key=get_item_num)
             curveList.sort(key=get_item_num)
             pathedInteriorsWithMatchingNames.sort(key=get_item_num)
@@ -478,12 +534,25 @@ def load(operator, context, filepath,
                         objPosition = str.split(pathedInteriorsWithMatchingNames[objectList.index(object) - 1]["position"])
                         objRotation= str.split(pathedInteriorsWithMatchingNames[objectList.index(object) - 1]["rotation"])
                         objScale = str.split(pathedInteriorsWithMatchingNames[objectList.index(object) - 1]["scale"])
-                    object["object"].location = (float(objPosition[0]),float(objPosition[1]),float(objPosition[2]))
-                    object["object"].scale = (float(objScale[0]),float(objScale[1]),float(objScale[2]))
+                    try:
+                        object["object"].location = (float(objPosition[0]),float(objPosition[1]),float(objPosition[2]))
+                    except:
+                        print("Object position value is invalid!")
+                        object["object"].location = (0,0,0)
+                    try:
+                        object["object"].scale = (float(objScale[0]),float(objScale[1]),float(objScale[2]))
+                    except:
+                        print("Object scale value is invalid!")
+                        object["object"].scale = (0,0,0)
                     object["object"].rotation_mode = "AXIS_ANGLE"
                     # marble blast's stored rotation values are different than blender's. we need to make the rotation angle negative and move it to the front
-                    object["object"].rotation_axis_angle = (-float(objRotation[3]) * (float(math.pi)/180),float(objRotation[0]),float(objRotation[1]),float(objRotation[2]))
-                    object["object"].dif_props.marker_type = str.casefold(pathedInteriorsWithMatchingNames[objectList.index(object) - 1]["smoothingType"])
+                    try:
+                        object["object"].rotation_axis_angle = (-float(objRotation[3]) * (float(math.pi)/180),float(objRotation[0]),float(objRotation[1]),float(objRotation[2]))
+                    except: 
+                        print("Object rotation value is invalid!")
+                        object["object"].rotation_axis_angle = (0,1,0,0)
+                    if objectList.index(object) > 0:
+                        object["object"].dif_props.marker_type = str.casefold(pathedInteriorsWithMatchingNames[objectList.index(object) - 1]["smoothingType"])
             # paths are slightly different as the base interior never has a path so omit the + 1
             for curve in curveList: 
                 if get_pathed_interior_by_name == False:
@@ -498,11 +567,23 @@ def load(operator, context, filepath,
             itemPosition = str.split(item["position"])
             itemRotation = str.split(item["rotation"])
             itemScale = str.split(item["scale"])
-            itemObject.location = (float(itemPosition[0]),float(itemPosition[1]),float(itemPosition[2]))
-            itemObject.scale = (float(itemScale[0]),float(itemScale[1]),float(itemScale[2]))
+            try:
+                itemObject.location = (float(itemPosition[0]),float(itemPosition[1]),float(itemPosition[2]))
+            except:
+                print("Object position value is invalid!")
+                itemObject.location = (0,0,0)
+            try:
+                itemObject.scale = (float(itemScale[0]),float(itemScale[1]),float(itemScale[2]))
+            except:
+                print("Object scale value is invalid!")
+                itemObject.scale = (0,0,0)
             itemObject.rotation_mode = "AXIS_ANGLE"
             # marble blast's stored rotation values are different than blender's. we need to make the rotation angle negative and move it to the front
-            itemObject.rotation_axis_angle = (-float(itemRotation[3]) * (float(math.pi)/180),float(itemRotation[0]),float(itemRotation[1]),float(itemRotation[2]))
+            try:
+                itemObject.rotation_axis_angle = (-float(itemRotation[3]) * (float(math.pi)/180),float(itemRotation[0]),float(itemRotation[1]),float(itemRotation[2]))
+            except: 
+                print("Object rotation value is invalid!")
+                itemObject.rotation_axis_angle = (0,1,0,0)
         # put the item and its children in the finished collection
         oldCollections = itemObject.users_collection
         finishedCollection.objects.link(itemObject)
@@ -548,6 +629,7 @@ def load(operator, context, filepath,
                                 imagePath = str(textureNode.image.filepath)
                                 newImagePath = imagePath.replace("base",str(item["skin"])) if str(item["skin"]) != "pink" else imagePath
                                 try: textureNode.image = bpy.data.images.load(newImagePath)
+                                # sometimes material names have the wrong file extension in them for some reason, if image fails to load then try the other extension
                                 except:
                                     if newImagePath.find(".jpg") != -1:
                                         newImagePath = newImagePath.replace(".jpg",".png")
@@ -578,9 +660,17 @@ def load(operator, context, filepath,
                         if mat.name == "whitegreen" or mat.name == "greenwhite" or mat.name == "whiteblue" or mat.name == "bluewhite":
                             texNode = None
                             onlyTransparency = False
-                        material_check(texNode,mat,matOldName=(mat.name),item=item,bsdfNode=bsdfNode,attempt_to_fix_transparency=attempt_to_fix_transparency,onlyTransparency=onlyTransparency,datablock = item["dataBlock"])
+                        material_check(texNode,mat,matOldName=(mat.name),item=item,bsdfNode=bsdfNode,attempt_to_fix_transparency=attempt_to_fix_transparency,onlyTransparency=onlyTransparency,datablock = item["dataBlock"],checkTexNode = True)
                     if child.type == "MESH":
                         for polygon in child.data.polygons: polygon.use_smooth = True
+                        if recalculate_dts_normals == True:
+                            bm = bmesh.new()
+                            bm.from_mesh(child.data)
+                            bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+                            bm.to_mesh(child.data)
+                            bm.clear()
+                            child.data.update()
+                            bm.free()
                 oldCollectionsChild = child.users_collection
                 finishedCollection.objects.link(child)
                 finishedCollection.instance_offset = child.location
@@ -607,8 +697,8 @@ def load(operator, context, filepath,
 
 class ImportMis:
     start_time = time.time()
-    mis = r"S:\downloads\PlatinumQuest-Dev-master\PlatinumQuest-Dev-master\Marble Blast Platinum\platinum\data\missions\custom\**\*.mis"
-    mcs = r"S:\downloads\PlatinumQuest-Dev-master\PlatinumQuest-Dev-master\Marble Blast Platinum\platinum\data\missions\custom\**\*.mcs"
+    mis = r"S:\downloads\PlatinumQuest-Dev-master\PlatinumQuest-Dev-master\Marble Blast Platinum\platinum\data\multiplayer\test\**\*.mis"
+    mcs = r"S:\downloads\PlatinumQuest-Dev-master\PlatinumQuest-Dev-master\Marble Blast Platinum\platinum\data\multiplayer\test\**\*.mcs"
     # dif = r"S:\downloads\PlatinumQuest-Dev-master\PlatinumQuest-Dev-master\Marble Blast Platinum\platinum\data\**\*.dif"
     # dts = r"S:\downloads\PlatinumQuest-Dev-master\PlatinumQuest-Dev-master\Marble Blast Platinum\platinum\data\**\*.dts"
     filesList = glob.glob(mis, recursive=True)
