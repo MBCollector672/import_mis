@@ -1,2 +1,4 @@
 .__pycache__/*
 .vscode/*
+.io_scene_dts/__pycache__/*
+.io_dif/__pycache__/*
