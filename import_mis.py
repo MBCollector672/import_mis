@@ -102,10 +102,8 @@ def load(operator, context, filepath,
                     if texNode != "":
                         bpy.data.materials[mat.name].node_tree.links.new(texNode.outputs["Color"], bsdfNode.inputs["Base Color"])
                         print("used image is" + str(texNode.image))
-        # couple of fixes for weird transparency shenanigans
-        if texNode != "" and texNode != None and item["gem"] == True and texNode.image.name.find("gemshine") == -1:
-            bpy.data.images[texNode.image.name].alpha_mode = 'NONE'
-        if texNode != "" and texNode != None and (texNode.image != None and texNode.image.name.find("finishback_01") != -1 or texNode.image != None and texNode.image.name.find("finishsign_01") != -1):
+        # fixes for images being transparent but not being rendered as such in marble blast
+        if texNode != "" and texNode != None and mat.torque_props.use_transparency == False:
             bpy.data.images[texNode.image.name].alpha_mode = 'NONE'
         # turning on transparency if the prop is supposed to be transparent
         if texNode != "" and texNode != None and mat.torque_props.use_transparency == True and attempt_to_fix_transparency == True:
