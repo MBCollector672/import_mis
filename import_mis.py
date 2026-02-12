@@ -6,8 +6,8 @@ import random
 import bmesh
 from pathlib import Path
 # import io_dif
-from . import import_dts
-from . import import_dif
+from .io_scene_dts import import_dts
+from .io_dif import import_dif
 
 def load(operator, context, filepath,
      # mis import configs
