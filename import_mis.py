@@ -73,14 +73,14 @@ def load(operator, context, filepath,
                         try: texNode.image = bpy.data.images.load(imagePath)
                         except: 
                             if datablock == "StartPad" or datablock == "EndPad" or datablock == "StartPad_MBG" or datablock == "EndPad_MBG":
-                                if matOldName == "whitegreen" or matOldName == "whiteblue":
+                                if str(matOldName).find("whitegreen") == 0 or str(matOldName).find("whiteblue") == 0:
                                     imagePath = (str(Path(item["file"]).parent)) + "\\white.jpg"
                                     print(texNode.image)
                                     texNode.image = bpy.data.images.load(imagePath)
-                                if matOldName == "greenwhite":
+                                if str(matOldName).find("greenwhite") == 0:
                                     imagePath = (str(Path(item["file"]).parent)) + "\\green.jpg"
                                     texNode.image = bpy.data.images.load(imagePath)
-                                if matOldName == "bluewhite":
+                                if str(matOldName).find("bluewhite") == 0:
                                     imagePath = (str(Path(item["file"]).parent)) + "\\blue.jpg"
                                     texNode.image = bpy.data.images.load(imagePath)
                             print("No skin found at",imagePath) if texNode.image == None else None
@@ -649,7 +649,7 @@ def load(operator, context, filepath,
                             bsdfNode = node if node.bl_idname == "ShaderNodeBsdfPrincipled" else bsdfNode
                         if texNode == None:
                             print(texNode)
-                        if mat.name == "whitegreen" or mat.name == "greenwhite" or mat.name == "whiteblue" or mat.name == "bluewhite":
+                        if str(mat.name).find("whitegreen") == 0 or str(mat.name).find("greenwhite") == 0 or str(mat.name).find("whiteblue") == 0 or str(mat.name).find("bluewhite") == 0:
                             texNode = None
                             onlyTransparency = False
                         material_check(texNode,mat,matOldName=(mat.name),item=item,bsdfNode=bsdfNode,attempt_to_fix_transparency=attempt_to_fix_transparency,onlyTransparency=onlyTransparency,datablock = item["dataBlock"],checkTexNode = True)
