@@ -473,7 +473,7 @@ def load(operator, context, filepath,
            if object.name.find(".dif") == -1 and object.name.find(".dts") == -1 and object.parent == None:
                 object.parent = itemObject
                 # only do all this stuff if we want to get the pathed interiors from the mis file
-                if get_pathed_interiors_from_mis == True and item["dts"] == False and len(pathedInteriorList) > 0:
+                if get_pathed_interiors_from_mis == True and item["dts"] == False and len(pathedInteriorsWithMatchingNames) > 0:
                     if get_pathed_interior_by_name == False:
                         if item["interiorIndex"] == None:
                             if object.type == "CURVE": bpy.data.objects.remove(object)
@@ -552,7 +552,7 @@ def load(operator, context, filepath,
                         print("Didn't delete",curve)
                 else:
                     pass
-        if get_pathed_interiors_from_mis == False or item["dts"] == True or len(pathedInteriorList) == 0:
+        if get_pathed_interiors_from_mis == False or item["dts"] == True or len(pathedInteriorsWithMatchingNames) == 0:
             # correctly format position rotation etc.
             itemPosition = str.split(item["position"])
             itemRotation = str.split(item["rotation"])
