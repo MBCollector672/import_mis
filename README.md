@@ -48,7 +48,7 @@ Download the plugin from releases and install it as you would any other Blender 
 - Slows down the more files you have previously imported (this appears to be an issue with io_scene_dts and maybe io_dif, so there isn't anything I can do about this unfortunately)
 - Can take a long time on very large levels (like Citadel)
 - Cannot import from compiled scripts (ex. .mcs.dso, .cs.dso)
-- Somewhat hacky as MB is often inconsistent in how its files are organized.
+- Somewhat hacky as MB is often inconsistent in how its files are organized
 
 ## Credits
 
