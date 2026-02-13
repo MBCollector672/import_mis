@@ -45,6 +45,7 @@ Download the plugin from releases and install it as you would any other Blender 
 - pack1marble.dts and pack2marble.dts freeze the DTS importer (no idea why, they import fine using io_scene_dts from Blender)
 - DTS LODs are usually not correctly deleted
 - Some DTS collision is not deleted
+- Cannot import IFL animated textures (mostly used in MBXP shapes)
 - Cannot recreate the Marble Blast behavior of darkening/lightning the texture depending on scaling
 - Slows down the more files you have previously imported (this appears to be an issue with io_scene_dts and maybe io_dif, so there isn't anything I can do about this unfortunately)
 - Can take a long time on very large levels (like Citadel)
