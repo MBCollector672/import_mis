@@ -9,7 +9,7 @@ from pathlib import Path
 from .io_scene_dts import import_dts
 from .io_dif import import_dif
 
-def load(operator, context, filepath,
+def load(operator, context, PQ_dev_dir, filepath,
      # mis import configs
     include_dif = True,
     include_dts = True,
@@ -60,40 +60,53 @@ def load(operator, context, filepath,
                 texNode = mat.node_tree.nodes.new("ShaderNodeTexImage")
                 matOldName = matOldName[:matOldName.find("#")] if matOldName.find("#") != -1 else matOldName
                 imagePath = (str(Path(item["file"]).parent) + "\\" + matOldName)
+                imageDevPath = (str(Path(item["devfile"]).parent) + "\\" + matOldName)
                 print(imagePath)
                 if item["skin"] != "base" and item["skin"] != None:
                     newImagePath = str(imagePath).replace("base",str(item["skin"]))
+                    newImageDevPath = str(imageDevPath).replace("base",str(item["skin"]))
                 else:
                     newImagePath = imagePath
+                    newImageDevPath = imageDevPath
                 if item["skin"] != None:
                     print(item["skin"])
-                    try: texNode.image = bpy.data.images.load(newImagePath)
+                    try: 
+                        try: texNode.image = bpy.data.images.load(newImagePath)
+                        except: texNode.image = bpy.data.images.load(newImageDevPath)
                     except:
-                        print("Skin",item["skin"],"at",newImagePath,"doesn't seem to exist. Using base skin instead")
-                        try: texNode.image = bpy.data.images.load(imagePath)
+                        print("Skin",item["skin"],"at",newImagePath,"or",newImageDevPath,"doesn't seem to exist. Using base skin instead")
+                        try: 
+                            try: texNode.image = bpy.data.images.load(imagePath)
+                            except: texNode.image = bpy.data.images.load(imageDevPath)
                         except: 
                             if datablock == "StartPad" or datablock == "EndPad" or datablock == "StartPad_MBG" or datablock == "EndPad_MBG":
                                 if str(matOldName).find("whitegreen") == 0 or str(matOldName).find("whiteblue") == 0:
                                     imagePath = (str(Path(item["file"]).parent)) + "\\white.jpg"
-                                    print(texNode.image)
-                                    texNode.image = bpy.data.images.load(imagePath)
+                                    imageDevPath = (str(Path(item["devfile"]).parent)) + "\\white.jpg"
+                                    try: texNode.image = bpy.data.images.load(imagePath)
+                                    except: texNode.image = bpy.data.images.load(imageDevPath)
                                 if str(matOldName).find("greenwhite") == 0:
                                     imagePath = (str(Path(item["file"]).parent)) + "\\green.jpg"
-                                    texNode.image = bpy.data.images.load(imagePath)
+                                    imageDevPath = (str(Path(item["devfile"]).parent)) + "\\green.jpg"
+                                    try: texNode.image = bpy.data.images.load(imagePath)
+                                    except: texNode.image = bpy.data.images.load(imageDevPath)
                                 if str(matOldName).find("bluewhite") == 0:
                                     imagePath = (str(Path(item["file"]).parent)) + "\\blue.jpg"
-                                    texNode.image = bpy.data.images.load(imagePath)
-                            print("No skin found at",imagePath) if texNode.image == None else None
+                                    imageDevPath = (str(Path(item["devfile"]).parent)) + "\\blue.jpg"
+                                    try: texNode.image = bpy.data.images.load(imagePath)
+                                    except: texNode.image = bpy.data.images.load(imageDevPath)
+                            print("No skin found at",imagePath,"or",imageDevPath) if texNode.image == None else None
                     bpy.data.materials[mat.name].node_tree.links.new(texNode.outputs["Color"], bsdfNode.inputs["Base Color"])
                 else:
                     # trash hacky fix for materials sometimes not having their file extension in the name
                     for fileExtension in fileExtensions:
                         try: 
-                            texNode.image = bpy.data.images.load(imagePath + fileExtension)
+                            try: texNode.image = bpy.data.images.load(imagePath + fileExtension)
+                            except: texNode.image = bpy.data.images.load(imageDevPath + fileExtension)
                             break
                         except: 
                             if fileExtensions.index(fileExtension) == len(fileExtensions) - 1:
-                                print("No image found at " + imagePath)
+                                print("No image found at " + imagePath + " or " + imageDevPath)
                                 try: nodes.remove(texNode)
                                 except: print("Failed to remove",texNode)
                                 texNode = ""
@@ -215,6 +228,7 @@ def load(operator, context, filepath,
                     itemFile = misString[get_next_quote(misString, interiorResourceIndex) + 1:get_next_quote(misString, get_next_quote(misString,interiorResourceIndex) + 1)]
                     itemFile = itemFile[itemFile.find("data"):] if itemFile.find("data") != 0 else itemFile
                     itemFilePath = Path(activeMisDataPath + itemFile)
+                    itemFileDevPath = Path(pqDevDataPath + itemFile)
                     itemInteriorIndex = int(misString[get_next_quote(misString, interiorIndexIndex) + 1:get_next_quote(misString, get_next_quote(misString,interiorIndexIndex) + 1)])
                     # find the marker with seqnum 0 and use its smoothing type for the object's smoothing type (sometimes difs don't have smoothing types defined)
                     itemPathIndex = str.casefold(misString).find("new path(", itemIndex)
@@ -258,6 +272,7 @@ def load(operator, context, filepath,
                     itemFile = misString[get_next_quote(misString, itemFileIndex) + 1:get_next_quote(misString, get_next_quote(misString, itemFileIndex) + 1)]
                     itemFile = itemFile[itemFile.find("data"):] if itemFile.find("data") != 0 else itemFile
                     itemFilePath = Path(activeMisDataPath + itemFile)
+                    itemFileDevPath = Path(pqDevDataPath + itemFile)
                 # most DTSes are special and need to have a datablock found instead and resolved to an interior file
                 elif string == "SimGroup(":
                     pass
@@ -284,15 +299,19 @@ def load(operator, context, filepath,
                     # for some reason HelpBubbles (and maybe other dtses idk) have their filepath start with platinum/ instead of ~/ or /. god knows why
                     itemFile = itemFile[itemFile.find("data"):] if itemFile.find("data") != 0 else itemFile
                     itemFilePath = Path(activeMisDataPath + itemFile)
-                fileTemp = Path(itemFilePath)
+                    itemFileDevPath = Path(pqDevDataPath + itemFile)
+                fileTemp = Path(itemFilePath) if Path(itemFilePath).exists() else Path(itemFileDevPath)
                 itemName = fileTemp.name
                 # fix mbu pads defaulting to mbm pads for some reason
                 if dtsDataBlock == "StartPad_MBM" or dtsDataBlock == "EndPad_MBM" and use_mbu_pads == True:
                     itemFilePath = Path(str(itemFilePath).replace(itemName,"mbu\\"+ itemName))
+                    itemFileDevPath = Path(str(itemFileDevPath).replace(itemName,"mbu\\"+ itemName))
                 # fixing checkpoint is a bit more involved
                 elif dtsDataBlock != None and str.casefold(dtsDataBlock) == "checkpoint" and isMBU == True and use_mbu_pads == True:
                     checkPadPath = glob.glob(activeMisDataPath + "\\**\\pads\\checkpad.dts", recursive=True)
                     itemFilePath = Path(checkPadPath[0])
+                    checkPadDevPath = glob.glob(pqDevDataPath + "\\**\\pads\\checkpad.dts", recursive=True)
+                    itemFileDevPath = Path(checkPadDevPath[0])
                     itemName == "checkpad.dts"
                     tempScaleList = str.split(itemScale)
                     for num in tempScaleList: tempScaleList[tempScaleList.index(num)] = float(num) * 2
@@ -300,7 +319,7 @@ def load(operator, context, filepath,
                 if itemName == " ":
                     print(itemName)
                 objList.append(dict(position = itemPosition, rotation = itemRotation, scale = itemScale, file = itemFilePath, 
-                                    skin = dtsSkin, name = itemName, dts = isDts, gem = isGem, dataBlock = dtsDataBlock, smoothingType = itemSmoothingType, interiorIndex = itemInteriorIndex))
+                                    skin = dtsSkin, name = itemName, dts = isDts, gem = isGem, dataBlock = dtsDataBlock, smoothingType = itemSmoothingType, interiorIndex = itemInteriorIndex, devfile = itemFileDevPath))
             if string != ("SimGroup("): 
                 itemIndex = misString.find(string, itemIndexEnd)
             else:
@@ -352,6 +371,9 @@ def load(operator, context, filepath,
     misPathString = str(misPath)
     activeMisDataPath = misPathString[0:misPathString.find("data")]
     activeMisScriptsPath = Path(activeMisDataPath + r"server\scripts")
+    pqDevScriptsPath = Path(PQ_dev_dir + r"\Marble Blast Platinum\platinum\server\scripts")
+    pqDevDataPath = (str(Path(PQ_dev_dir + r"\Marble Blast Platinum\platinum")) + "\\")
+
     misString = activeMis.read()
     isMBU = True if misString.find("game = \"Ultra\";") != -1 else False
     activeMis.close
@@ -363,6 +385,7 @@ def load(operator, context, filepath,
     scriptMegaString = " "
     # find all the script files and add them to a giant string for datablock locating purposes
     scriptFileList = glob.glob(str(activeMisScriptsPath)+"\**\*.cs", recursive=True)
+    scriptFileList.extend(glob.glob(str(pqDevScriptsPath)+"\**\*.cs", recursive=True))
     for file in scriptFileList:
         csFile = Path(file).open()
         newScript = csFile.read()
@@ -391,7 +414,12 @@ def load(operator, context, filepath,
         if str(item["name"]).find(".dts") == -1:
             try: 
                 print("importing",item["name"])
-                import_dif.load(context = bpy.context, filepath = item["file"])
+                # load from the configured PQ dev repo path if we can't find the file
+                # putting in item["file"] didn't work and putting in filepath = item["file"] used to work but it stopped for no reason so i guess i gotta do this
+                itemToLoad = item["file"]
+                devItemToLoad = item["devfile"]
+                try: import_dif.load(bpy.context, itemToLoad)
+                except: import_dif.load(bpy.context, devItemToLoad)
                 print("imported",item["name"],"successfully")
                 # sometimes the mis has the incorrect path and PQ automatically corrects it so we need to account for that
             except FileNotFoundError as exception:
@@ -399,8 +427,10 @@ def load(operator, context, filepath,
                 if str(item["file"]).find("interiors_") == -1:
                     for extension in gameExtensions:
                         newPath = Path(str(item["file"]).replace("interiors","interiors_" + extension))
+                        newDevPath = Path(str(item["devfile"]).replace("interiors","interiors_" + extension))
                         try: 
-                            import_dif.load(context = bpy.context, filepath = newPath)
+                            try: import_dif.load(bpy.context, newPath)
+                            except: import_dif.load(bpy.context, newDevPath)
                             succeededFix = True
                             break
                         except FileNotFoundError as exception:
@@ -412,8 +442,10 @@ def load(operator, context, filepath,
                 # ' in interior file paths has a \ added before it. this makes the path invalid so we need to see if this is happening and remove it
                 if str(item["file"]).find(r"\'") != -1:
                     newPath = Path(str(item["file"]).replace(r"\'","'"))
+                    newDevPath = Path(str(item["devfile"]).replace(r"\'","'"))
                     try: 
-                        import_dif.load(context = bpy.context, filepath = newPath)
+                        try: import_dif.load(bpy.context, newPath)
+                        except: import_dif.load(bpy.context, newDevPath)
                         succeededFix = True
                     except FileNotFoundError as exception:
                         continue
@@ -435,27 +467,36 @@ def load(operator, context, filepath,
                 # if one of those is detected
                 print("importing",item["name"])
                 if item["name"] != "pack1marble.dts" and item["name"] != "pack2marble.dts":
-                    import_dts.load(operator, context, filepath = item["file"], reference_keyframe=reference_keyframe,
+                    # load from the configured PQ dev repo path if we can't find the file
+                    # putting in item["file"] didn't work and putting in filepath = item["file"] used to work but it stopped for no reason so i guess i gotta do this
+                    itemToLoad = item["file"]
+                    devItemToLoad = item["devfile"]
+                    try: import_dts.load(operator, context, itemToLoad, reference_keyframe=reference_keyframe,
+                    import_sequences=import_sequences,use_armature=use_armature)
+                    except: import_dts.load(operator, context, devItemToLoad, reference_keyframe=reference_keyframe,
                     import_sequences=import_sequences,use_armature=use_armature)
                     print("imported",item["name"],"successfully")
                     if (item["dataBlock"] == "EndPad_MBM" and use_mbu_pads == True) or item["dataBlock"] == "EndPad_MBU":
                         lightBeamPath = str(item["file"]).replace(item["name"],"lightbeam.dts")
-                        import_dts.load(operator, context, filepath = lightBeamPath, reference_keyframe=reference_keyframe,
+                        lightBeamDevPath = str(item["devfile"]).replace(item["name"],"lightbeam.dts")
+                        try: import_dts.load(operator, context, lightBeamPath, reference_keyframe=reference_keyframe,
+                                                     import_sequences=import_sequences,use_armature=use_armature)
+                        except: import_dts.load(operator, context, lightBeamDevPath, reference_keyframe=reference_keyframe,
                                                      import_sequences=import_sequences,use_armature=use_armature)
                         print("imported lightbeam.dts successfully")
                 else:
                     print(item["name"],"is known to freeze the mis importer for some reason. You will need to add it manually using io_scene_dts. A placeholder has been placed instead.")
-                    import_dif.load(context = bpy.context, filepath = fakeColmesh)
+                    import_dif.load(bpy.context, fakeColmesh)
                     item["name"] = item["name"][:str(item["name"]).find(".dts")] + " (import_mis placeholder).dts"
                     # colmesh doesn't load so create a cube instead
             except:
                 if item["name"] == "colmesh.dts":
                     print("io_scene_dts cannot import colmesh.dts. An equivalent will be created with a Blender cube")
-                    import_dif.load(context = bpy.context, filepath = fakeColmesh)
+                    import_dif.load(bpy.context, fakeColmesh)
                     item["name"] = "Colmesh (import_mis placeholder).dts"
                 elif item["name"] == "octahedron.dts":
                     print("io_scene_dts cannot import octahedron.dts. An equivalent will be created instead")
-                    import_dif.load(context = bpy.context, filepath = octahedronDif)                 
+                    import_dif.load(bpy.context, octahedronDif)                 
                 else:
                     print("import_dts failed on item #" + str(itemList.index(item)) + "! Item name:",item["name"])
                     failedDts.append(item["name"])
@@ -686,7 +727,7 @@ def load(operator, context, filepath,
     return {"FINISHED"}
 
 # class ImportMis:
-#     start_time = time.time()
+#     # start_time = time.time()
 #     mis = r"S:\downloads\PlatinumQuest-Dev-master\PlatinumQuest-Dev-master\Marble Blast Platinum\platinum\data\multiplayer\test\**\*.mis"
 #     mcs = r"S:\downloads\PlatinumQuest-Dev-master\PlatinumQuest-Dev-master\Marble Blast Platinum\platinum\data\multiplayer\test\**\*.mcs"
 #     # dif = r"S:\downloads\PlatinumQuest-Dev-master\PlatinumQuest-Dev-master\Marble Blast Platinum\platinum\data\**\*.dif"
@@ -753,8 +794,8 @@ def load(operator, context, filepath,
 #     #     else:
 #     #         print("DTS is a packmarble, not importing")
 
-#     end_time = time.time()
-#     print(end_time - start_time,"seconds elapsed")
+#     # end_time = time.time()
+#     # print(end_time - start_time,"seconds elapsed")
 #     print(len(errorDif),"dif and",len(errorDts),"dts failed to import properly!")
 #     print("Failed imports:",errorDif,errorDts)
         

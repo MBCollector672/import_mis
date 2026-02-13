@@ -14,25 +14,63 @@ if "bpy" in locals():
     import importlib
 
     if "import_mis" in locals():
-        importlib.reload(import_mis)
+        importlib.reload(__package__)
 
 import bpy
+import os
+import json
+from pathlib import Path
 from bpy.props import (BoolProperty,
                        StringProperty)
 
 from bpy_extras.io_utils import (ImportHelper)
 
-bl_info = {
-    "name": "Import mis",
-    "author": "MBCollector672",
-    "version": (1,0,0),
-    "blender": (4,5,6),
-    "location": "File > Import-Export",
-    "description": "mis/mcs (Marble Blast mission file) importer for Blender",
-    "warning": "",
-    "doc_url": "",
-    "category": "Import-Export",
-}
+def readprefs():
+    user_prefs_path = bpy.utils.extension_path_user("bl_ext.user_default.MBCollector672_import_mis", path="")
+    if os.path.exists(os.path.join(user_prefs_path, "prefs.json")):
+        with open(os.path.join(user_prefs_path, "prefs.json"), "r") as prefs_file:
+            prefs = json.load(prefs_file)
+    else:
+        prefs = {"PQ_dev_dir": ""}
+    return prefs
+
+
+
+def writeprefs(cls: "ImportMisPreferences", context: bpy.types.Context):
+    prefs = {"PQ_dev_dir": cls.PQ_dev_dir}
+    user_prefs_path = bpy.utils.extension_path_user("bl_ext.user_default.MBCollector672_import_mis",path="")
+    if not os.path.exists(user_prefs_path):
+        bpy.utils.extension_path_user("bl_ext.user_default.MBCollector672_import_mis",path="",create=True)
+    if not os.path.exists(os.path.join(user_prefs_path, "prefs.json")):
+        prefs_file = open(os.path.join(user_prefs_path, "prefs.json"), "w")
+        prefs_file.close()
+    with open(os.path.join(user_prefs_path, "prefs.json"), "w") as prefs_file:
+        json.dump(prefs, prefs_file)
+    
+
+
+class ImportMisPreferences(bpy.types.AddonPreferences):
+    bl_idname = __package__
+
+    prefs = readprefs()
+
+    PQ_dev_dir: StringProperty(
+        name="PlatinumQuest Development Directory",
+        description="The path to your local copy of PlatinumQuest's development repository",
+        subtype='DIR_PATH',
+        update=writeprefs,
+        default=prefs.get('PQ_dev_dir')
+    )
+
+    def returnpref(pref):
+        prefs = readprefs()
+        return prefs.get(pref)
+
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text="Import Mis Preferences")
+        layout.prop(self, "PQ_dev_dir")
+    
 
 class ImportMis(bpy.types.Operator, ImportHelper):
     bl_idname = "import_scene.mis"
@@ -187,8 +225,9 @@ class ImportMis(bpy.types.Operator, ImportHelper):
     def execute(self,context):
         from . import import_mis
 
+        PQ_dev_dir = ImportMisPreferences.returnpref("PQ_dev_dir")
         keywords = self.as_keywords(ignore=("filter_glob", "split_mode"))
-        return import_mis.load(self, context, **keywords)
+        return import_mis.load(self, context, PQ_dev_dir, **keywords)
     
 class ImportMcs(bpy.types.Operator, ImportHelper):
     bl_idname = "import_scene.mcs"
@@ -343,8 +382,9 @@ class ImportMcs(bpy.types.Operator, ImportHelper):
     def execute(self,context):
         from . import import_mis
 
+        PQ_dev_dir = ImportMisPreferences.returnpref("PQ_dev_dir")
         keywords = self.as_keywords(ignore=("filter_glob", "split_mode"))
-        return import_mis.load(self, context, **keywords)
+        return import_mis.load(self, context, PQ_dev_dir, **keywords)
     
 def menu_func_import_mis(self, context):
     self.layout.operator(ImportMis.bl_idname, text="Marble Blast (.mis)")
@@ -355,12 +395,14 @@ def menu_func_import_mcs(self, context):
 def register():
     bpy.utils.register_class(ImportMis)
     bpy.utils.register_class(ImportMcs)
+    bpy.utils.register_class(ImportMisPreferences)
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import_mis)
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import_mcs)
 
 def unregister():
     bpy.utils.unregister_class(ImportMis)
     bpy.utils.unregister_class(ImportMcs)
+    bpy.utils.unregister_class(ImportMisPreferences)
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import_mis)
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import_mcs)
     
