@@ -1,7 +1,7 @@
 # Import Mis
 
 Blender plugin to import Marble Blast .mis files and PlatinumQuest .mcs files.
-Requires [io_dif](https://github.com/RandomityGuy/io_dif) and [io_scene_dts](https://github.com/SimplyEpic5/io_scene_dts) installed in Blender to function properly.
+Requires [io_dif](https://github.com/RandomityGuy/io_dif) and [io_scene_dts](https://github.com/MBCollector672/io_scene_dts) installed in Blender to function properly.
 
 ## Note
 Import Mis has mostly been tested using PlatinumQuest. It should work correctly on Marble Blast Gold as well but I can't guarantee compatibility with other mods (if you find incompatibilities, let me know).
@@ -18,7 +18,7 @@ You can link this copy in addon preferences and import_mis will import from ther
 
 ### Shape importing
 
-- Powered by [io_scene_dts](https://github.com/SimplyEpic5/io_scene_dts)
+- Powered by [io_scene_dts](https://github.com/MBCollector672/io_scene_dts)
 - Imports all shapes and aligns/scales/rotates them the way they are set up in-game
 - Can fix shapes importing without textures
 - Can fix shapes importing without transparency
@@ -36,7 +36,7 @@ Highly configurable gem import settings, including:
 
 ## Installation
 
-Download the plugin from releases and install it as you would any other Blender plugin. Make sure you have [io_dif](https://github.com/RandomityGuy/io_dif) and [io_scene_dts](https://github.com/SimplyEpic5/io_scene_dts) installed.
+Download the plugin from releases and install it as you would any other Blender plugin. Make sure you have [io_dif](https://github.com/RandomityGuy/io_dif) and [io_scene_dts](https://github.com/MBCollector672/io_scene_dts) installed.
 
 ## Known issues/limitations
 
@@ -45,6 +45,7 @@ Download the plugin from releases and install it as you would any other Blender 
 - pack1marble.dts and pack2marble.dts freeze the DTS importer (no idea why, they import fine using io_scene_dts from Blender)
 - DTS LODs are usually not correctly deleted
 - Some DTS collision is not deleted
+- Cannot import IFL animated textures (mostly used in MBXP shapes)
 - Cannot recreate the Marble Blast behavior of darkening/lightning the texture depending on scaling
 - Slows down the more files you have previously imported (this appears to be an issue with io_scene_dts and maybe io_dif, so there isn't anything I can do about this unfortunately)
 - Can take a long time on very large levels (like Citadel)
