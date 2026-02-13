@@ -6,8 +6,6 @@ import random
 import bmesh
 from pathlib import Path
 # import io_dif
-from .io_scene_dts import import_dts
-from .io_dif import import_dif
 
 def load(operator, context, PQ_dev_dir, filepath,
      # mis import configs
@@ -418,8 +416,8 @@ def load(operator, context, PQ_dev_dir, filepath,
                 # putting in item["file"] didn't work and putting in filepath = item["file"] used to work but it stopped for no reason so i guess i gotta do this
                 itemToLoad = item["file"]
                 devItemToLoad = item["devfile"]
-                try: import_dif.load(bpy.context, itemToLoad)
-                except: import_dif.load(bpy.context, devItemToLoad)
+                try: bpy.ops.import_scene.dif(filepath=str(itemToLoad))
+                except: bpy.ops.import_scene.dif(filepath=str(devItemToLoad))
                 print("imported",item["name"],"successfully")
                 # sometimes the mis has the incorrect path and PQ automatically corrects it so we need to account for that
             except FileNotFoundError as exception:
@@ -429,8 +427,8 @@ def load(operator, context, PQ_dev_dir, filepath,
                         newPath = Path(str(item["file"]).replace("interiors","interiors_" + extension))
                         newDevPath = Path(str(item["devfile"]).replace("interiors","interiors_" + extension))
                         try: 
-                            try: import_dif.load(bpy.context, newPath)
-                            except: import_dif.load(bpy.context, newDevPath)
+                            try: bpy.ops.import_scene.dif(filepath=str(newPath))
+                            except: bpy.ops.import_scene.dif(filepath=str(newDevPath))
                             succeededFix = True
                             break
                         except FileNotFoundError as exception:
@@ -444,8 +442,8 @@ def load(operator, context, PQ_dev_dir, filepath,
                     newPath = Path(str(item["file"]).replace(r"\'","'"))
                     newDevPath = Path(str(item["devfile"]).replace(r"\'","'"))
                     try: 
-                        try: import_dif.load(bpy.context, newPath)
-                        except: import_dif.load(bpy.context, newDevPath)
+                        try: bpy.ops.import_scene.dif(filepath=str(newPath))
+                        except: bpy.ops.import_scene.dif(filepath=str(newDevPath))
                         succeededFix = True
                     except FileNotFoundError as exception:
                         continue
@@ -471,32 +469,32 @@ def load(operator, context, PQ_dev_dir, filepath,
                     # putting in item["file"] didn't work and putting in filepath = item["file"] used to work but it stopped for no reason so i guess i gotta do this
                     itemToLoad = item["file"]
                     devItemToLoad = item["devfile"]
-                    try: import_dts.load(operator, context, itemToLoad, reference_keyframe=reference_keyframe,
+                    try: bpy.ops.import_scene.dts(filepath=str(itemToLoad), reference_keyframe=reference_keyframe,
                     import_sequences=import_sequences,use_armature=use_armature)
-                    except: import_dts.load(operator, context, devItemToLoad, reference_keyframe=reference_keyframe,
+                    except: bpy.ops.import_scene.dts(filepath=str(devItemToLoad), reference_keyframe=reference_keyframe,
                     import_sequences=import_sequences,use_armature=use_armature)
                     print("imported",item["name"],"successfully")
                     if (item["dataBlock"] == "EndPad_MBM" and use_mbu_pads == True) or item["dataBlock"] == "EndPad_MBU":
                         lightBeamPath = str(item["file"]).replace(item["name"],"lightbeam.dts")
                         lightBeamDevPath = str(item["devfile"]).replace(item["name"],"lightbeam.dts")
-                        try: import_dts.load(operator, context, lightBeamPath, reference_keyframe=reference_keyframe,
+                        try: bpy.ops.import_scene.dts(filepath=str(lightBeamPath), reference_keyframe=reference_keyframe,
                                                      import_sequences=import_sequences,use_armature=use_armature)
-                        except: import_dts.load(operator, context, lightBeamDevPath, reference_keyframe=reference_keyframe,
+                        except: bpy.ops.import_scene.dts(filepath=str(lightBeamDevPath), reference_keyframe=reference_keyframe,
                                                      import_sequences=import_sequences,use_armature=use_armature)
                         print("imported lightbeam.dts successfully")
                 else:
                     print(item["name"],"is known to freeze the mis importer for some reason. You will need to add it manually using io_scene_dts. A placeholder has been placed instead.")
-                    import_dif.load(bpy.context, fakeColmesh)
+                    bpy.ops.import_scene.dif(filepath=str(fakeColmesh))
                     item["name"] = item["name"][:str(item["name"]).find(".dts")] + " (import_mis placeholder).dts"
                     # colmesh doesn't load so create a cube instead
             except:
                 if item["name"] == "colmesh.dts":
                     print("io_scene_dts cannot import colmesh.dts. An equivalent will be created with a Blender cube")
-                    import_dif.load(bpy.context, fakeColmesh)
+                    bpy.ops.import_scene.dif(filepath=str(fakeColmesh))
                     item["name"] = "Colmesh (import_mis placeholder).dts"
                 elif item["name"] == "octahedron.dts":
                     print("io_scene_dts cannot import octahedron.dts. An equivalent will be created instead")
-                    import_dif.load(bpy.context, octahedronDif)                 
+                    bpy.ops.import_scene.dif(filepath=str(octahedronDif))                 
                 else:
                     print("import_dts failed on item #" + str(itemList.index(item)) + "! Item name:",item["name"])
                     failedDts.append(item["name"])
