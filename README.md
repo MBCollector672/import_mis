@@ -6,6 +6,7 @@ Requires [io_dif](https://github.com/RandomityGuy/io_dif) and [io_scene_dts](htt
 ## Note
 Import Mis has mostly been tested using PlatinumQuest. It should work correctly on Marble Blast Gold as well but I can't guarantee compatibility with other mods (if you find incompatibilities, let me know).
 It also cannot import from compiled scripts and heavily relies on .mcs and .cs files to be uncompiled to function properly. If you want to import a .mcs file, you should import from a local copy of the [PQ development repository](https://github.com/The-New-Platinum-Team/PlatinumQuest-Dev).
+You can link this copy in addon preferences and import_mis will import from there if an object doesn't exist in the correct location relative to the mission file.
 
 ## Features
 
