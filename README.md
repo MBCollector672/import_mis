@@ -41,6 +41,7 @@ Download the plugin from releases and install it as you would any other Blender 
 ## Known issues/limitations
 
 - Untested on Mac/Linux
+- Very likely to fail if the mission file has items that are placed with code
 - A few uncommon DTS files do not import correctly
 - pack1marble.dts and pack2marble.dts freeze the DTS importer (no idea why, they import fine using io_scene_dts from Blender)
 - DTS LODs are usually not correctly deleted
