@@ -1,6 +1,6 @@
 schema_version = "1.0.0"
 id = "MBCollector672_import_mis"
-version = "1.1.1"
+version = "1.2.0"
 name = "Import Mis"
 tagline = "mis/mcs (Marble Blast mission file) importer for Blender"
 maintainer = "MBCollector672"
