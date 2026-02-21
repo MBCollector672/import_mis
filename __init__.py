@@ -338,7 +338,7 @@ class ImportMcs(bpy.types.Operator, ImportHelper):
 
     delete_dts_col: BoolProperty(
     name="Delete DTS Collision",
-    description="Tries to delete DTS collision, which looks ugly in Blender. Usually works, but not always",
+    description="Tries to delete DTS collision, which looks ugly in Blender. Usually works, but not always. Disable if parts of a DTS are missing.",
     default=True,
     )
 

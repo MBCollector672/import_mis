@@ -36,7 +36,7 @@ def load(operator, context, PQ_dev_dir, filepath,
     ):
     failedDif = []
     failedDts = []
-    gameExtensions = ["mbp","mbg","mbu","pq"]
+    gameExtensions = ["","_mbp","_mbg","_mbu","_pq"]
     def text_node_check(mat):
         nodes = bpy.data.materials[mat.name].node_tree.nodes
         alreadyHasTexNode = False
@@ -49,7 +49,7 @@ def load(operator, context, PQ_dev_dir, filepath,
         try: return list["number"]
         except: return list["interiorIndex"]
     def material_check(texNode,mat,matOldName,item,bsdfNode,attempt_to_fix_transparency,onlyTransparency = False,datablock = None, checkTexNode = False):
-        fileExtensions = ["",".png",".jpg",".PNG",".JPG","_01.png", "_01.jpg", "_01.JPG", "_01.PNG"]
+        fileExtensions = ["",".png",".jpg",".PNG",".JPG","_01.png", "_01.jpg", "_01.JPG", "_01.PNG", "_1.png", "_1.jpg", "_1.JPG", "_1.PNG", "_a.png", "_a.jpg", "_a.JPG", "_a.PNG"]
         if texNode == None and onlyTransparency == False:
         # sometimes the texture node fails to be recognized? either that or somewhere in the code sets it to none. it also fails to remove the texture node even though it
         # recognizes that it exists after trying and failing to remove it. i don't understand why or how but it happens and this fixes it
@@ -72,7 +72,7 @@ def load(operator, context, PQ_dev_dir, filepath,
                         try: texNode.image = bpy.data.images.load(newImagePath)
                         except: texNode.image = bpy.data.images.load(newImageDevPath)
                     except:
-                        print("Skin",item["skin"],"at",newImagePath,"or",newImageDevPath,"doesn't seem to exist. Using base skin instead")
+                        print("Skin",item["skin"],"at",newImagePath,"or",newImageDevPath,"doesn't seem to exist. Using base skin instead") if item["skin"] != "fix the pad skin" else None
                         try: 
                             try: texNode.image = bpy.data.images.load(imagePath)
                             except: texNode.image = bpy.data.images.load(imageDevPath)
@@ -114,7 +114,7 @@ def load(operator, context, PQ_dev_dir, filepath,
                         bpy.data.materials[mat.name].node_tree.links.new(texNode.outputs["Color"], bsdfNode.inputs["Base Color"])
                         print("used image is" + str(texNode.image))
         # fixes for images being transparent but not being rendered as such in marble blast
-        if texNode != "" and texNode != None and mat.torque_props.use_transparency == False:
+        if texNode != "" and texNode != None and texNode.image != None and mat.torque_props.use_transparency == False:
             bpy.data.images[texNode.image.name].alpha_mode = 'NONE'
         # turning on transparency if the prop is supposed to be transparent
         if texNode != "" and texNode != None and mat.torque_props.use_transparency == True and attempt_to_fix_transparency == True:
@@ -126,8 +126,18 @@ def load(operator, context, PQ_dev_dir, filepath,
         mbuValidGems = ["red", "yellow", "blue"]
         mbuIllegalGems = ["base", "purple", "green", "turquoise", "orange", "black", "white"]
         pqValidGems = ["red", "yellow", "blue", "base", "purple", "green", "turquoise", "orange", "black", "platinum"]
+        bmValidGems = ["ruby", "gold", "purple", "sapphire", "pink"]
         def get_next_quote(misString, index):
             return misString.find("\"", index)
+        
+        def check_if_comment(string, index):
+            lastLine = string[:index].rfind("\n")
+            nextLine = string.find("\n", index)
+            # print(string[lastLine:nextLine])
+            if string[lastLine:nextLine].find("//") != -1:
+                return True
+            else:
+                return False
         
         def get_gem_item(dataBlock, rand):
             # change gem lists depending on settings
@@ -147,12 +157,15 @@ def load(operator, context, PQ_dev_dir, filepath,
                     color = "black"
                 # yes candy is technically a gem but the transparency on candy is actually needed and isGem tells the program to turn the transparency off if it's true
                 return (dataBlock,color,False)
-            if dataBlock.find("Fancy") != -1:
+            if dataBlock == "GemItem_BMGate":
+                color = "bm_gate_gem"
+                game = "bm"
+            elif dataBlock.find("Fancy") != -1:
                 color = str.casefold(dataBlock[12:])
             else:
                 color = str.casefold(dataBlock[7:])
-            if color != "":
-                if (color.find("pq") != -1 or color.find("mbu") != -1):
+            if color != "" and color != "bm_gate_gem":
+                if (color.find("pq") != -1 or color.find("mbu") != -1 or color.find("bm") != -1):
                     colorNameList = color.split("_")
                     if len(colorNameList[0]) >= 3:
                         color = colorNameList[0]
@@ -166,7 +179,7 @@ def load(operator, context, PQ_dev_dir, filepath,
                     game = "mbg"
                     color = "base" if len(color) < 3 else color
             else:
-                game = "mbg"
+                game = "mbg" if game != "bm" else game
                 color = "base" if len(color) < 3 else color
             match game:
                 case "mbg":
@@ -185,6 +198,22 @@ def load(operator, context, PQ_dev_dir, filepath,
                     newDataBlock = "FancyGemItem_PQ"
                     if rand == True and color == "base":
                         color = str(pqValidGems[random.randint(0,len(pqValidGems) - 1)])
+                case "bm":
+                    newDataBlock = "GemItem_BM"
+                    if rand == True and color == "base":
+                        color = str(bmValidGems[random.randint(0,len(bmValidGems) - 1)])
+                    if color == "pink":
+                        color = "base"
+                    elif color == "ruby":
+                        color = "red"
+                    elif color == "purple":
+                        pass
+                    elif color == "sapphire":
+                        color = "blue"
+                    elif color == "gold":
+                        color = "yellow"
+                    else:
+                        color == "bm_gate_gem"
                 case _:
                     print("Failed to determine gem color. This should never happen.")
             return(newDataBlock,color,True)
@@ -201,12 +230,14 @@ def load(operator, context, PQ_dev_dir, filepath,
             dtsDataBlock = None
             itemSmoothingType = None
             itemInteriorIndex = None
-            # this is a pretty trash fix for some SimGroups not being PathedInteriors. i added this pretty late and i am too lazy to make it properly
+            itemFile = ""
+            # dontAppend is a pretty trash fix for some SimGroups not being PathedInteriors. i added this pretty late and i am too lazy to make it properly
             dontAppend = False
             itemPositionIndex = misString.find("position", itemIndex)
             itemRotationIndex = misString.find("rotation", itemIndex)
             itemScaleIndex = misString.find("scale", itemIndex)
             dtsSkinIndex = misString.find("skin", itemIndex)
+            itemIndexEnd = misString.find("};", itemIndex)
             if string == "TSStatic(":
                 itemFileIndex = str.casefold(misString).find("shapename", itemIndex)
                 isDts = True
@@ -223,11 +254,30 @@ def load(operator, context, PQ_dev_dir, filepath,
                     itemScaleIndex = str.casefold(misString).find("scale", pathedInteriorIndex)
                     interiorResourceIndex = str.casefold(misString).find("interiorresource",pathedInteriorIndex)
                     interiorIndexIndex = str.casefold(misString).find("interiorindex",pathedInteriorIndex)
+                    isComment = check_if_comment(misString,interiorResourceIndex)
+                    while isComment == True and interiorResourceIndex < itemIndexEnd:
+                        interiorResourceIndex = str.casefold(misString).find("interiorresource",interiorResourceIndex + 1)
+                        isComment = check_if_comment(misString,interiorResourceIndex)
+                        dontAppend = True if interiorResourceIndex > itemIndexEnd else dontAppend
                     itemFile = misString[get_next_quote(misString, interiorResourceIndex) + 1:get_next_quote(misString, get_next_quote(misString,interiorResourceIndex) + 1)]
+                    dontAppend if itemFile == "" else dontAppend
                     itemFile = itemFile[itemFile.find("data"):] if itemFile.find("data") != 0 else itemFile
                     itemFilePath = Path(activeMisDataPath + itemFile)
                     itemFileDevPath = Path(pqDevDataPath + itemFile)
-                    itemInteriorIndex = int(misString[get_next_quote(misString, interiorIndexIndex) + 1:get_next_quote(misString, get_next_quote(misString,interiorIndexIndex) + 1)])
+                    itemInteriorIndex = -1
+                    # sometimes there's no quotes around interiorIndex. if there are no quotes, try to get the interiorIndex another way
+                    try: itemInteriorIndex = int(misString[get_next_quote(misString, interiorIndexIndex) + 1:get_next_quote(misString, get_next_quote(misString,interiorIndexIndex) + 1)])
+                    except: 
+                        interiorIndexSemicolonIndex = str.casefold(misString).find(";",interiorIndexIndex)
+                        isValidNumber = True
+                        interiorIndexValueIndex = interiorIndexSemicolonIndex - 1
+                        while(isValidNumber == True):
+                            if str(misString[interiorIndexValueIndex:interiorIndexSemicolonIndex]).isnumeric() == True:
+                                itemInteriorIndex = int(misString[interiorIndexValueIndex:interiorIndexSemicolonIndex])
+                                interiorIndexValueIndex = interiorIndexValueIndex - 1
+                            else:
+                                isValidNumber = False
+                        dontAppend = True if itemInteriorIndex == -1 else dontAppend
                     # find the marker with seqnum 0 and use its smoothing type for the object's smoothing type (sometimes difs don't have smoothing types defined)
                     itemPathIndex = str.casefold(misString).find("new path(", itemIndex)
                     itemMarkerIndex = str.casefold(misString).find("marker(", itemPathIndex)
@@ -256,9 +306,17 @@ def load(operator, context, PQ_dev_dir, filepath,
                     dontAppend = True
             else:
                 dtsDataBlockIndex = str.casefold(misString).find("datablock", itemIndex)
+                isComment = check_if_comment(misString,dtsDataBlockIndex)
+                while isComment == True and dtsDataBlockIndex < itemIndexEnd:
+                    dtsDataBlockIndex = str.casefold(misString).find("datablock",dtsDataBlockIndex + 1)
+                    isComment = check_if_comment(misString,dtsDataBlockIndex)
+                    dontAppend = True if dtsDataBlockIndex > itemIndexEnd else dontAppend
+                dontAppend = True if dtsDataBlockIndex - 4 == str.casefold(misString).find("realdatablock", itemIndex) else dontAppend
                 isDts = True
+                # occasionally Item( appears in a mis file without being attached to an Item() definition, so don't append this item if it's not a real Item()
+                if not (dtsDataBlockIndex > itemIndex and dtsDataBlockIndex < itemIndexEnd):
+                    dontAppend = True
             if dontAppend == False:
-                itemIndexEnd = misString.find("};", itemIndex)
                 # misString[start:end] where start = the next quotation mark after the position index + 1 (so we don't keep the quote in InteriorPosition), 
                 # and end is the next quotation mark after that one.
                 itemPosition = misString[get_next_quote(misString, itemPositionIndex) + 1:get_next_quote(misString, get_next_quote(misString, itemPositionIndex) + 1)]
@@ -267,7 +325,14 @@ def load(operator, context, PQ_dev_dir, filepath,
                 if (not dtsSkinIndex > itemIndexEnd) and (dtsSkinIndex != -1):
                     dtsSkin = misString[get_next_quote(misString, dtsSkinIndex) + 1:get_next_quote(misString, get_next_quote(misString, dtsSkinIndex) + 1)]
                 if string == "TSStatic(" or string == "InteriorInstance(":
+                    # check if the item is commented out for some reason
+                    isComment = check_if_comment(misString,itemFileIndex)
+                    while isComment == True and itemFileIndex < itemIndexEnd:
+                        itemFileIndex = str.casefold(misString).find("shapename",itemFileIndex + 1) if string == "TSStatic(" else str.casefold(misString).find("interiorfile",itemFileIndex + 1)
+                        isComment = check_if_comment(misString,itemFileIndex)
+                        dontAppend = True if itemFileIndex > itemIndexEnd else dontAppend
                     itemFile = misString[get_next_quote(misString, itemFileIndex) + 1:get_next_quote(misString, get_next_quote(misString, itemFileIndex) + 1)]
+                    dontAppend if itemFile == "" else dontAppend
                     itemFile = itemFile[itemFile.find("data"):] if itemFile.find("data") != 0 else itemFile
                     itemFilePath = Path(activeMisDataPath + itemFile)
                     itemFileDevPath = Path(pqDevDataPath + itemFile)
@@ -276,24 +341,47 @@ def load(operator, context, PQ_dev_dir, filepath,
                     pass
                 else:
                     dtsDataBlock = misString[get_next_quote(misString, dtsDataBlockIndex) + 1:get_next_quote(misString, get_next_quote(misString, dtsDataBlockIndex) + 1)]
-                    if str.casefold(dtsDataBlock).find("gemitem") != -1 or str.casefold(dtsDataBlock).find("candyitem") != -1:     
+                    # the anti is a fix for go'way's antigem being registered as a gem
+                    if (str.casefold(dtsDataBlock).find("gemitem") != -1 or str.casefold(dtsDataBlock).find("candyitem") != -1) and (str.casefold(dtsDataBlock).find("anti") == -1):     
                         dtsDataBlock,dtsSkin,isGem = get_gem_item(dtsDataBlock,rand)
                     # this game adores messing with capitalization for some reason so we gotta casefold everything
                     scriptStringDtsIndex = str.casefold(scriptString).find("itemdata(" + str.casefold(dtsDataBlock))
+                    misStringDtsIndex = None
                     if scriptStringDtsIndex == -1:
                         scriptStringDtsIndex = str.casefold(scriptString).find("staticshapedata(" + str.casefold(dtsDataBlock))
                         if scriptStringDtsIndex == -1:
-                            scriptStringDtsIndex = str.casefold(misString).find("staticshapedata(" + str.casefold(dtsDataBlock))
-                            if scriptStringDtsIndex == -1:
-                                scriptStringDtsIndex = str.casefold(misString).find("itemdata(" + str.casefold(dtsDataBlock))
+                            misStringDtsIndex = str.casefold(misString).find("staticshapedata(" + str.casefold(dtsDataBlock))
+                            if misStringDtsIndex == -1:
+                                misStringDtsIndex = str.casefold(misString).find("itemdata(" + str.casefold(dtsDataBlock))
                     # hardcoded fix for a few mbxp shapes being before the default shapes in the script string for some reason
-                    if dtsDataBlock == "StartPad" or dtsDataBlock == "EndPad":
+                    if (dtsDataBlock == "StartPad" or dtsDataBlock == "EndPad") and (misStringDtsIndex == None):
                         scriptStringDtsIndex = str.casefold(scriptString).find("staticshapedata(" + str.casefold(dtsDataBlock) + ")")
                     # hardcoded fix for mbg and mbp pads not loading their textures
                     if dtsDataBlock == "StartPad" or dtsDataBlock == "EndPad" or dtsDataBlock == "StartPad_MBG" or dtsDataBlock == "EndPad_MBG":
                         dtsSkin = "fix the pad skin"
                     scriptStringDtsShapeFileIndex = str.casefold(scriptString).find("shapefile",scriptStringDtsIndex)
-                    itemFile = scriptString[get_next_quote(scriptString, scriptStringDtsShapeFileIndex) + 1:get_next_quote(scriptString, get_next_quote(scriptString, scriptStringDtsShapeFileIndex) + 1)]
+                    misStringDtsShapeFileIndex = str.casefold(misString).find("shapefile",misStringDtsIndex)
+                    scriptStringDataIndexEnd = scriptString.find("};", scriptStringDtsIndex)
+                    misStringDataIndexEnd = misString.find("};", misStringDtsIndex)
+                    if misStringDtsIndex != None and misStringDtsIndex != -1:
+                        isComment = check_if_comment(scriptString,misStringDtsShapeFileIndex)
+                        while isComment == True and misStringDtsShapeFileIndex < misStringDataIndexEnd:
+                            misStringDtsShapeFileIndex = str.casefold(scriptString).find("shapefile",misStringDtsShapeFileIndex + 1)
+                            isComment = check_if_comment(scriptString,misStringDtsShapeFileIndex)
+                            dontAppend = True if misStringDtsShapeFileIndex > misStringDataIndexEnd else dontAppend
+                        itemFile = misString[get_next_quote(misString, misStringDtsShapeFileIndex) + 1:get_next_quote(misString, get_next_quote(misString, misStringDtsShapeFileIndex) + 1)]
+                    elif scriptStringDtsIndex != -1:
+                        isComment = check_if_comment(scriptString,scriptStringDtsShapeFileIndex)
+                        while (isComment == True) and (scriptStringDtsShapeFileIndex < scriptStringDataIndexEnd):
+                            scriptStringDtsShapeFileIndex = str.casefold(scriptString).find("shapefile",scriptStringDtsShapeFileIndex + 1)
+                            isComment = check_if_comment(scriptString,scriptStringDtsShapeFileIndex)
+                            dontAppend = True if scriptStringDtsShapeFileIndex > scriptStringDataIndexEnd else dontAppend
+                        itemFile = scriptString[get_next_quote(scriptString, scriptStringDtsShapeFileIndex) + 1:get_next_quote(scriptString, get_next_quote(scriptString, scriptStringDtsShapeFileIndex) + 1)]
+                    else:
+                        dontAppend = True
+                    if itemFile == "":
+                        print("Item is invalid")
+                        dontAppend = True
                     # for some reason HelpBubbles (and maybe other dtses idk) have their filepath start with platinum/ instead of ~/ or /. god knows why
                     itemFile = itemFile[itemFile.find("data"):] if itemFile.find("data") != 0 else itemFile
                     itemFilePath = Path(activeMisDataPath + itemFile)
@@ -314,10 +402,15 @@ def load(operator, context, PQ_dev_dir, filepath,
                     tempScaleList = str.split(itemScale)
                     for num in tempScaleList: tempScaleList[tempScaleList.index(num)] = float(num) * 2
                     itemScale = (str(tempScaleList[0]) + " " + str(tempScaleList[1]) + " " + str(tempScaleList[2]))
-                if itemName == " ":
-                    print(itemName)
-                objList.append(dict(position = itemPosition, rotation = itemRotation, scale = itemScale, file = itemFilePath, 
-                                    skin = dtsSkin, name = itemName, dts = isDts, gem = isGem, dataBlock = dtsDataBlock, smoothingType = itemSmoothingType, interiorIndex = itemInteriorIndex, devfile = itemFileDevPath))
+                elif dtsSkin != None and str.casefold(dtsSkin) == "bm_gate_gem":
+                    itemFilePath = Path(str(itemFilePath).replace(itemName,"GemGate_bm.dts"))
+                    itemFileDevPath = Path(str(itemFileDevPath).replace(itemName,"GemGate_bm.dts"))
+                if itemName.find(".dts") == -1 and itemName.find(".dif") == -1:
+                    print("Item",itemName,"is invalid")
+                    dontAppend = True
+                if dontAppend == False:
+                    objList.append(dict(position = itemPosition, rotation = itemRotation, scale = itemScale, file = itemFilePath, 
+                                        skin = dtsSkin, name = itemName, dts = isDts, gem = isGem, dataBlock = dtsDataBlock, smoothingType = itemSmoothingType, interiorIndex = itemInteriorIndex, devfile = itemFileDevPath))
             if string != ("SimGroup("): 
                 itemIndex = misString.find(string, itemIndexEnd)
             else:
@@ -325,12 +418,15 @@ def load(operator, context, PQ_dev_dir, filepath,
                 itemIndex = misString.find(string, itemIndex + 1)
         return objList
     # other initialization
+    print("loading",filepath)
     numPathNodesRemoved = 0
     fakeColmesh = str(Path(os.path.realpath(__file__)).parent) + r"\cube.dif"
     octahedronDif = str(Path(os.path.realpath(__file__)).parent) + r"\octahedron.dif"
     coloredTileMazeLookupTable = str(Path(os.path.realpath(__file__)).parent) + r"\coloredtilemazelookuptable.txt"
+    bd2PlumbingLookupTable = str(Path(os.path.realpath(__file__)).parent) + r"\bd2_plumbingnoobslookuptable.txt"
+    bd2PlumbingNoobsLookupTable = str(Path(os.path.realpath(__file__)).parent) + r"\bd2_plumbinglookuptable.txt"
     stringsToSearchFor = []
-    stringsToSearchFor.append("Item()") if include_item == True and include_dts == True else None
+    stringsToSearchFor.append("Item(") if include_item == True and include_dts == True else None
     stringsToSearchFor.append("TSStatic(") if include_tsstatic == True and include_dts == True else None
     stringsToSearchFor.append("StaticShape(") if include_static_shape == True and include_dts == True else None
     stringsToSearchFor.append("InteriorInstance(") if include_dif == True else None
@@ -361,7 +457,7 @@ def load(operator, context, PQ_dev_dir, filepath,
                 collection.objects.unlink(childObject)
     # open mis and find interiors and stuff
     misPath = filepath
-    activeMis = open(misPath)
+    activeMis = open(misPath, errors="ignore")
     activeMisName = os.path.basename(activeMis.name)
     # create a collection to put all the imported stuff into
     finishedCollection = bpy.data.collections.new(activeMisName)
@@ -375,11 +471,22 @@ def load(operator, context, PQ_dev_dir, filepath,
     misString = activeMis.read()
     isMBU = True if misString.find("game = \"Ultra\";") != -1 else False
     activeMis.close
-    if activeMisName == "ColoredTileMaze.mcs":
-        # i am not paid enough to deal with this
-        activeMis = open(coloredTileMazeLookupTable)
-        misString = activeMis.read()
-        activeMis.close
+    # i am not paid enough to deal with this
+    match activeMisName:
+        case "ColoredTileMaze.mcs":
+            activeMis = open(coloredTileMazeLookupTable)
+            misString = activeMis.read()
+            activeMis.close
+        case "bd2_plumbing.mis":
+            activeMis = open(bd2PlumbingLookupTable)
+            misString = activeMis.read()
+            activeMis.close
+        case "bd2_plumbing-noobs.mis":
+            activeMis = open(bd2PlumbingNoobsLookupTable)
+            misString = activeMis.read()
+            activeMis.close
+        case _:
+            pass
     scriptMegaString = " "
     # find all the script files and add them to a giant string for datablock locating purposes
     scriptFileList = glob.glob(str(activeMisScriptsPath)+"\**\*.cs", recursive=True)
@@ -417,44 +524,53 @@ def load(operator, context, PQ_dev_dir, filepath,
                 itemToLoad = item["file"]
                 devItemToLoad = item["devfile"]
                 try: bpy.ops.import_scene.dif(filepath=str(itemToLoad))
-                except: bpy.ops.import_scene.dif(filepath=str(devItemToLoad))
+                except FileNotFoundError: bpy.ops.import_scene.dif(filepath=str(devItemToLoad))
                 print("imported",item["name"],"successfully")
-                # sometimes the mis has the incorrect path and PQ automatically corrects it so we need to account for that
-            except FileNotFoundError as exception:
+            except FileNotFoundError:
                 succeededFix = False
-                if str(item["file"]).find("interiors_") == -1:
-                    for extension in gameExtensions:
-                        newPath = Path(str(item["file"]).replace("interiors","interiors_" + extension))
-                        newDevPath = Path(str(item["devfile"]).replace("interiors","interiors_" + extension))
-                        try: 
-                            try: bpy.ops.import_scene.dif(filepath=str(newPath))
-                            except: bpy.ops.import_scene.dif(filepath=str(newDevPath))
-                            succeededFix = True
-                            break
-                        except FileNotFoundError as exception:
-                            continue
-                        except:
-                            print(item["file"])
-                            print("import_dif failed on item #" + str(itemList.index(item)) + "! Item name:",str(item["name"]))
-                            failedDif.append(item["name"])
                 # ' in interior file paths has a \ added before it. this makes the path invalid so we need to see if this is happening and remove it
                 if str(item["file"]).find(r"\'") != -1:
                     newPath = Path(str(item["file"]).replace(r"\'","'"))
                     newDevPath = Path(str(item["devfile"]).replace(r"\'","'"))
+                    item["file"] = Path(newPath)
+                    item["devfile"] = Path(newDevPath)
                     try: 
                         try: bpy.ops.import_scene.dif(filepath=str(newPath))
-                        except: bpy.ops.import_scene.dif(filepath=str(newDevPath))
+                        except FileNotFoundError: bpy.ops.import_scene.dif(filepath=str(newDevPath))
                         succeededFix = True
-                    except FileNotFoundError as exception:
+                    except FileNotFoundError:
                         continue
                     except:
                         print(item["file"])
                         print("import_dif failed on item #" + str(itemList.index(item)) + "! Item name:",str(item["name"]))
                         failedDif.append(item["name"])
+                # sometimes the mis has the incorrect path and PQ automatically corrects it so we need to account for that
+                if str(item["file"]).find("interiors") != -1:
+                    # if the path has interiors_*** in it, replace it with just interiors
+                    if str(item["file"]).find("interiors_") != -1:
+                        for extension in gameExtensions:
+                            if str(item["file"]).find("interiors" + extension) != -1 and len(extension) > 1:
+                                item["file"] = Path(str(item["file"]).replace("interiors" + extension,"interiors"))
+                                item["devfile"] = Path(str(item["devfile"]).replace("interiors" + extension,"interiors"))
+                                break
+                    for extension in gameExtensions:
+                        newPath = Path(str(item["file"]).replace("interiors","interiors" + extension))
+                        newDevPath = Path(str(item["devfile"]).replace("interiors","interiors" + extension))
+                        try: 
+                            try: bpy.ops.import_scene.dif(filepath=str(newPath))
+                            except FileNotFoundError: bpy.ops.import_scene.dif(filepath=str(newDevPath))
+                            succeededFix = True
+                            break
+                        except FileNotFoundError:
+                            continue
+                        except:
+                            print(item["file"])
+                            print("import_dif failed on item #" + str(itemList.index(item)) + "! Item name:",str(item["name"]))
+                            failedDif.append(item["name"])
                 if succeededFix == False:
                     print(item["file"])
                     print("import_dif failed on item #" + str(itemList.index(item)) + "! Could not find file:",str(item["name"]))
-                    failedDif.append(item["name"])
+                    failedDif.append(str(item["name"] + " FileNotFoundError"))
             except:
                 print(item["file"])
                 print("import_dif failed on item #" + str(itemList.index(item)) + "! Item name:",str(item["name"]))
@@ -471,7 +587,7 @@ def load(operator, context, PQ_dev_dir, filepath,
                     devItemToLoad = item["devfile"]
                     try: bpy.ops.import_scene.dts(filepath=str(itemToLoad), reference_keyframe=reference_keyframe,
                     import_sequences=import_sequences,use_armature=use_armature)
-                    except: bpy.ops.import_scene.dts(filepath=str(devItemToLoad), reference_keyframe=reference_keyframe,
+                    except FileNotFoundError: bpy.ops.import_scene.dts(filepath=str(devItemToLoad), reference_keyframe=reference_keyframe,
                     import_sequences=import_sequences,use_armature=use_armature)
                     print("imported",item["name"],"successfully")
                     if (item["dataBlock"] == "EndPad_MBM" and use_mbu_pads == True) or item["dataBlock"] == "EndPad_MBU":
@@ -479,15 +595,18 @@ def load(operator, context, PQ_dev_dir, filepath,
                         lightBeamDevPath = str(item["devfile"]).replace(item["name"],"lightbeam.dts")
                         try: bpy.ops.import_scene.dts(filepath=str(lightBeamPath), reference_keyframe=reference_keyframe,
                                                      import_sequences=import_sequences,use_armature=use_armature)
-                        except: bpy.ops.import_scene.dts(filepath=str(lightBeamDevPath), reference_keyframe=reference_keyframe,
+                        except FileNotFoundError: bpy.ops.import_scene.dts(filepath=str(lightBeamDevPath), reference_keyframe=reference_keyframe,
                                                      import_sequences=import_sequences,use_armature=use_armature)
                         print("imported lightbeam.dts successfully")
                 else:
                     print(item["name"],"is known to freeze the mis importer for some reason. You will need to add it manually using io_scene_dts. A placeholder has been placed instead.")
                     bpy.ops.import_scene.dif(filepath=str(fakeColmesh))
                     item["name"] = item["name"][:str(item["name"]).find(".dts")] + " (import_mis placeholder).dts"
-                    # colmesh doesn't load so create a cube instead
+            except FileNotFoundError:
+                print("import_dts failed on item #" + str(itemList.index(item)) + "! Could not find file:",str(item["name"]))
+                failedDts.append(str(item["name"] + " FileNotFoundError"))
             except:
+                # colmesh doesn't load so create a cube instead
                 if item["name"] == "colmesh.dts":
                     print("io_scene_dts cannot import colmesh.dts. An equivalent will be created with a Blender cube")
                     bpy.ops.import_scene.dif(filepath=str(fakeColmesh))
@@ -555,33 +674,48 @@ def load(operator, context, PQ_dev_dir, filepath,
                         print("Didn't delete",object)
                         object["object"].dif_props.marker_type = str.casefold(item["smoothingType"])
                 else:
+                    pathedInteriorToUse = None
+                    isValid = False
                     if object == objectList[0]:
                         objPosition = str.split(item["position"])
                         objRotation = str.split(item["rotation"])
                         objScale = str.split(item["scale"])
+                        isValid = True
                     else:
-                        objPosition = str.split(pathedInteriorsWithMatchingNames[objectList.index(object) - 1]["position"])
-                        objRotation= str.split(pathedInteriorsWithMatchingNames[objectList.index(object) - 1]["rotation"])
-                        objScale = str.split(pathedInteriorsWithMatchingNames[objectList.index(object) - 1]["scale"])
-                    try:
-                        object["object"].location = (float(objPosition[0]),float(objPosition[1]),float(objPosition[2]))
-                    except:
-                        print("Object position value is invalid!")
-                        object["object"].location = (0,0,0)
-                    try:
-                        object["object"].scale = (float(objScale[0]),float(objScale[1]),float(objScale[2]))
-                    except:
-                        print("Object scale value is invalid!")
-                        object["object"].scale = (0,0,0)
-                    object["object"].rotation_mode = "AXIS_ANGLE"
-                    # marble blast's stored rotation values are different than blender's. we need to make the rotation angle negative and move it to the front
-                    try:
-                        object["object"].rotation_axis_angle = (-float(objRotation[3]) * (float(math.pi)/180),float(objRotation[0]),float(objRotation[1]),float(objRotation[2]))
-                    except: 
-                        print("Object rotation value is invalid!")
-                        object["object"].rotation_axis_angle = (0,1,0,0)
-                    if objectList.index(object) > 0:
-                        object["object"].dif_props.marker_type = str.casefold(pathedInteriorsWithMatchingNames[objectList.index(object) - 1]["smoothingType"])
+                        for pathedInterior in pathedInteriorsWithMatchingNames:
+                            if pathedInterior["interiorIndex"] == (objectList.index(object) - 1):
+                                pathedInteriorToUse = pathedInterior
+                                break
+                        if pathedInteriorToUse != None:
+                            objPosition = str.split(pathedInteriorToUse["position"])
+                            objRotation= str.split(pathedInteriorToUse["rotation"])
+                            objScale = str.split(pathedInteriorToUse["scale"])
+                            isValid = True
+                    if isValid == True:
+                        try:
+                            object["object"].location = (float(objPosition[0]),float(objPosition[1]),float(objPosition[2]))
+                        except:
+                            print("Object position value is invalid!")
+                            object["object"].location = (0,0,0)
+                        try:
+                            object["object"].scale = (float(objScale[0]),float(objScale[1]),float(objScale[2]))
+                        except:
+                            print("Object scale value is invalid!")
+                            object["object"].scale = (0,0,0)
+                        object["object"].rotation_mode = "AXIS_ANGLE"
+                        # marble blast's stored rotation values are different than blender's. we need to make the rotation angle negative and move it to the front
+                        try:
+                            object["object"].rotation_axis_angle = (-float(objRotation[3]) * (float(math.pi)/180),float(objRotation[0]),float(objRotation[1]),float(objRotation[2]))
+                        except: 
+                            print("Object rotation value is invalid!")
+                            object["object"].rotation_axis_angle = (0,1,0,0)
+                        if objectList.index(object) > 0:
+                            try: object["object"].dif_props.marker_type = str.casefold(pathedInteriorToUse["smoothingType"])
+                            except: 
+                                print("smoothingType",pathedInteriorToUse["smoothingType"],"is not a valid smoothingType. Setting smoothingType to linear")
+                                object["object"].dif_props.marker_type = "linear"
+                    else:
+                        bpy.data.objects.remove(object["object"])
             # paths are slightly different as the base interior never has a path so omit the + 1
             for curve in curveList: 
                 if get_pathed_interior_by_name == False:
@@ -590,7 +724,11 @@ def load(operator, context, PQ_dev_dir, filepath,
                     else:
                         print("Didn't delete",curve)
                 else:
-                    pass
+                    isValid = False
+                    for pathedInterior in pathedInteriorsWithMatchingNames:
+                        if pathedInterior["interiorIndex"] == (curveList.index(curve)):
+                                isValid = True
+                    bpy.data.objects.remove(curve["curve"]) if isValid == False else None
         if get_pathed_interiors_from_mis == False or item["dts"] == True or len(pathedInteriorsWithMatchingNames) == 0:
             # correctly format position rotation etc.
             itemPosition = str.split(item["position"])
@@ -657,6 +795,8 @@ def load(operator, context, PQ_dev_dir, filepath,
                                 texNode = textureNode
                                 imagePath = str(textureNode.image.filepath)
                                 newImagePath = imagePath.replace("base",str(item["skin"])) if str(item["skin"]) != "pink" else imagePath
+                                # fix for blastedmarble's weird gate gem
+                                newImagePath = imagePath.replace("gem.gem","gem") if str(item["skin"]) == "bm_gate_gem" else newImagePath
                                 try: textureNode.image = bpy.data.images.load(newImagePath)
                                 # sometimes material names have the wrong file extension in them for some reason, if image fails to load then try the other extension
                                 except:
@@ -689,6 +829,9 @@ def load(operator, context, PQ_dev_dir, filepath,
                         if str(mat.name).find("whitegreen") == 0 or str(mat.name).find("greenwhite") == 0 or str(mat.name).find("whiteblue") == 0 or str(mat.name).find("bluewhite") == 0:
                             texNode = None
                             onlyTransparency = False
+                        # another trash hacky fix for a conflict between a specific dts and a specific image that are both in the game if you download the entirety of marbleland
+                        if item["name"] == "blacksquare.dts" and mat.name == "black":
+                            onlyTransparency = True
                         material_check(texNode,mat,matOldName=(mat.name),item=item,bsdfNode=bsdfNode,attempt_to_fix_transparency=attempt_to_fix_transparency,onlyTransparency=onlyTransparency,datablock = item["dataBlock"],checkTexNode = True)
                     if child.type == "MESH":
                         for polygon in child.data.polygons: polygon.use_smooth = True
