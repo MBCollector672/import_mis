@@ -29,6 +29,11 @@ def load(operator, context, PQ_dev_dir, filepath,
     try_only_highest_lod = True,
     recalculate_dts_normals = True,
     use_mbu_pads = True,
+    set_interiorinstance_dif_props = False,
+    set_pathedinterior_dif_props = False,
+    set_item_dif_props = False,
+    set_staticshape_dif_props = False,
+    set_tsstatic_dif_props = False,
     # dts import configs
     reference_keyframe = False,
     import_sequences = False,
@@ -120,6 +125,19 @@ def load(operator, context, PQ_dev_dir, filepath,
         if texNode != "" and texNode != None and mat.torque_props.use_transparency == True and attempt_to_fix_transparency == True:
             bpy.data.materials[mat.name].node_tree.links.new(texNode.outputs["Alpha"], bsdfNode.inputs["Alpha"])
 
+    def set_props(object, item):
+        object.dif_props.interior_type = "game_entity"
+        object.dif_props.game_entity_gameclass = item["itemClass"]
+        if item["gem"] == True:
+            object.dif_props.game_entity_datablock = item["oldDataBlock"]
+        else:
+            object.dif_props.game_entity_datablock = item["dataBlock"] if item["dataBlock"] != None else object.dif_props.game_entity_datablock
+        for prop in item["properties"]:
+            newProp = object.dif_props.game_entity_properties.add()
+            newProp.key = prop["prop"]
+            newProp.value = prop["value"]
+
+
     def find_in_file(misString, string, scriptString, activeMisDataPath, rand, allow_illegal_mbu_gems, allow_platinum_gems):
 
         mbgValidGems = ["red", "yellow", "blue", "base", "purple", "green", "turquoise", "orange", "black"]
@@ -155,7 +173,6 @@ def load(operator, context, PQ_dev_dir, filepath,
                     color = "orange"
                 elif color == "blue":
                     color = "black"
-                # yes candy is technically a gem but the transparency on candy is actually needed and isGem tells the program to turn the transparency off if it's true
                 return (dataBlock,color,False)
             if dataBlock == "GemItem_BMGate":
                 color = "bm_gate_gem"
@@ -218,7 +235,33 @@ def load(operator, context, PQ_dev_dir, filepath,
                     print("Failed to determine gem color. This should never happen.")
             return(newDataBlock,color,True)
 
-
+        def get_props(index, end, string):
+            
+            def get_next_non_space(spacestr, spaceindex, minus):
+                isSpace = str(spacestr[spaceindex]).isspace()
+                while isSpace == True:
+                    spaceindex = spaceindex + 1 if minus == False else spaceindex - 1
+                    isSpace = str(spacestr[spaceindex]).isspace()
+                return spaceindex
+                
+            propList = []
+            end = string[:end].rfind("\n")
+            while index < end:
+                if check_if_comment(string,index) == True:
+                    index = string.find("\n", index)
+                    continue
+                propStart = get_next_non_space(string, index, False)
+                prop = string[propStart:string.find(" ",propStart)]
+                if get_next_quote(string, index) < string.find(";",propStart):
+                    propVal = string[get_next_quote(string, index) + 1:get_next_quote(string, get_next_quote(string, index) + 1)]
+                else:
+                    propValEndIndex = get_next_non_space(string,string.find(";",propStart),True)
+                    propValStartIndex = get_next_non_space(string,string.find("=",propStart),False)
+                    propVal = string[propValStartIndex:propValEndIndex + 1]
+                propList.append(dict(prop = prop, value = propVal))
+                index = string.find("\n", index + 1)
+            return propList
+                    
         
         itemIndex = misString.find(string)
         objList = []
@@ -228,6 +271,7 @@ def load(operator, context, PQ_dev_dir, filepath,
             isGem = False
             dtsSkin = None
             dtsDataBlock = None
+            oldDataBlock = None
             itemSmoothingType = None
             itemInteriorIndex = None
             itemFile = ""
@@ -241,29 +285,34 @@ def load(operator, context, PQ_dev_dir, filepath,
             if string == "TSStatic(":
                 itemFileIndex = str.casefold(misString).find("shapename", itemIndex)
                 isDts = True
+                props = get_props(itemFileIndex, itemIndexEnd, misString) if set_tsstatic_dif_props == True else None
             elif string == "InteriorInstance(":
                 itemFileIndex = str.casefold(misString).find("interiorfile", itemIndex)
                 isDts = False
+                props = get_props(itemFileIndex, itemIndexEnd, misString) if set_interiorinstance_dif_props == True else None
             elif string == "SimGroup(":
                 nextSimGroupIndex = misString.find(string,itemIndex + 1)
                 pathedInteriorIndex = str.casefold(misString).find("pathedinterior(",itemIndex)
                 # if the simgroup doesn't have a pathed interior then skip it
                 if (pathedInteriorIndex < nextSimGroupIndex and pathedInteriorIndex > 0 ) or (pathedInteriorIndex > 0 and nextSimGroupIndex < 0):
+                    pathedInteriorIndexEnd = misString.find("};", pathedInteriorIndex)
                     itemPositionIndex = str.casefold(misString).find("position", pathedInteriorIndex)
                     itemRotationIndex = str.casefold(misString).find("rotation", pathedInteriorIndex)
                     itemScaleIndex = str.casefold(misString).find("scale", pathedInteriorIndex)
+                    pathedInteriorDataBlockIndex = str.casefold(misString).find("datablock",pathedInteriorIndex)
+                    props = get_props(pathedInteriorDataBlockIndex, pathedInteriorIndexEnd, misString) if set_pathedinterior_dif_props == True else None
                     interiorResourceIndex = str.casefold(misString).find("interiorresource",pathedInteriorIndex)
                     interiorIndexIndex = str.casefold(misString).find("interiorindex",pathedInteriorIndex)
                     isComment = check_if_comment(misString,interiorResourceIndex)
-                    while isComment == True and interiorResourceIndex < itemIndexEnd:
+                    while isComment == True and interiorResourceIndex < pathedInteriorIndexEnd:
                         interiorResourceIndex = str.casefold(misString).find("interiorresource",interiorResourceIndex + 1)
                         isComment = check_if_comment(misString,interiorResourceIndex)
-                        dontAppend = True if interiorResourceIndex > itemIndexEnd else dontAppend
+                        dontAppend = True if interiorResourceIndex > pathedInteriorIndexEnd else dontAppend
                     itemFile = misString[get_next_quote(misString, interiorResourceIndex) + 1:get_next_quote(misString, get_next_quote(misString,interiorResourceIndex) + 1)]
                     dontAppend if itemFile == "" else dontAppend
                     itemFile = itemFile[itemFile.find("data"):] if itemFile.find("data") != 0 else itemFile
-                    itemFilePath = Path(activeMisDataPath + itemFile)
-                    itemFileDevPath = Path(pqDevDataPath + itemFile)
+                    itemFilePath = Path(activeMisDataPath + itemFile.replace("\\",""))
+                    itemFileDevPath = Path(pqDevDataPath + itemFile.replace("\\",""))
                     itemInteriorIndex = -1
                     # sometimes there's no quotes around interiorIndex. if there are no quotes, try to get the interiorIndex another way
                     try: itemInteriorIndex = int(misString[get_next_quote(misString, interiorIndexIndex) + 1:get_next_quote(misString, get_next_quote(misString,interiorIndexIndex) + 1)])
@@ -306,6 +355,7 @@ def load(operator, context, PQ_dev_dir, filepath,
                     dontAppend = True
             else:
                 dtsDataBlockIndex = str.casefold(misString).find("datablock", itemIndex)
+                props = get_props(dtsDataBlockIndex, itemIndexEnd, misString) if (string == "Item(" and set_item_dif_props == True) or (string == "StaticShape(" and set_staticshape_dif_props == True) else None
                 isComment = check_if_comment(misString,dtsDataBlockIndex)
                 while isComment == True and dtsDataBlockIndex < itemIndexEnd:
                     dtsDataBlockIndex = str.casefold(misString).find("datablock",dtsDataBlockIndex + 1)
@@ -334,8 +384,8 @@ def load(operator, context, PQ_dev_dir, filepath,
                     itemFile = misString[get_next_quote(misString, itemFileIndex) + 1:get_next_quote(misString, get_next_quote(misString, itemFileIndex) + 1)]
                     dontAppend if itemFile == "" else dontAppend
                     itemFile = itemFile[itemFile.find("data"):] if itemFile.find("data") != 0 else itemFile
-                    itemFilePath = Path(activeMisDataPath + itemFile)
-                    itemFileDevPath = Path(pqDevDataPath + itemFile)
+                    itemFilePath = Path(activeMisDataPath + itemFile.replace("\\",""))
+                    itemFileDevPath = Path(pqDevDataPath + itemFile.replace("\\",""))
                 # most DTSes are special and need to have a datablock found instead and resolved to an interior file
                 elif string == "SimGroup(":
                     pass
@@ -343,6 +393,7 @@ def load(operator, context, PQ_dev_dir, filepath,
                     dtsDataBlock = misString[get_next_quote(misString, dtsDataBlockIndex) + 1:get_next_quote(misString, get_next_quote(misString, dtsDataBlockIndex) + 1)]
                     # the anti is a fix for go'way's antigem being registered as a gem
                     if (str.casefold(dtsDataBlock).find("gemitem") != -1 or str.casefold(dtsDataBlock).find("candyitem") != -1) and (str.casefold(dtsDataBlock).find("anti") == -1):     
+                        oldDataBlock = dtsDataBlock
                         dtsDataBlock,dtsSkin,isGem = get_gem_item(dtsDataBlock,rand)
                     # this game adores messing with capitalization for some reason so we gotta casefold everything
                     scriptStringDtsIndex = str.casefold(scriptString).find("itemdata(" + str.casefold(dtsDataBlock))
@@ -384,8 +435,8 @@ def load(operator, context, PQ_dev_dir, filepath,
                         dontAppend = True
                     # for some reason HelpBubbles (and maybe other dtses idk) have their filepath start with platinum/ instead of ~/ or /. god knows why
                     itemFile = itemFile[itemFile.find("data"):] if itemFile.find("data") != 0 else itemFile
-                    itemFilePath = Path(activeMisDataPath + itemFile)
-                    itemFileDevPath = Path(pqDevDataPath + itemFile)
+                    itemFilePath = Path(activeMisDataPath + itemFile.replace("\\",""))
+                    itemFileDevPath = Path(pqDevDataPath + itemFile.replace("\\",""))
                 fileTemp = Path(itemFilePath) if Path(itemFilePath).exists() else Path(itemFileDevPath)
                 itemName = fileTemp.name
                 # fix mbu pads defaulting to mbm pads for some reason
@@ -408,15 +459,31 @@ def load(operator, context, PQ_dev_dir, filepath,
                 if itemName.find(".dts") == -1 and itemName.find(".dif") == -1:
                     print("Item",itemName,"is invalid")
                     dontAppend = True
+                typeVar = ""
+                match string:
+                    case "InteriorInstance(":
+                        typeVar = "InteriorInstance"
+                    case "SimGroup(":
+                        typeVar = "PathedInterior"
+                    case "TSStatic(":
+                        typeVar = "TSStatic"
+                    case "Item(":
+                        typeVar = "Item"
+                    case "StaticShape(":
+                        typeVar = "StaticShape"
+                    case _:
+                        print("Invalid type")
                 if dontAppend == False:
                     objList.append(dict(position = itemPosition, rotation = itemRotation, scale = itemScale, file = itemFilePath, 
-                                        skin = dtsSkin, name = itemName, dts = isDts, gem = isGem, dataBlock = dtsDataBlock, smoothingType = itemSmoothingType, interiorIndex = itemInteriorIndex, devfile = itemFileDevPath))
+                                        skin = dtsSkin, name = itemName, dts = isDts, gem = isGem, dataBlock = dtsDataBlock, smoothingType = itemSmoothingType,
+                                        interiorIndex = itemInteriorIndex, devfile = itemFileDevPath, itemClass = typeVar, properties = props, oldDataBlock = oldDataBlock))
             if string != ("SimGroup("): 
                 itemIndex = misString.find(string, itemIndexEnd)
             else:
                 # using the next SimGroup instead of the end of the item index because that doesn't work for SimGroups. adding 1 so it doesn't find the previous SimGroup
                 itemIndex = misString.find(string, itemIndex + 1)
         return objList
+    
     # other initialization
     print("loading",filepath)
     numPathNodesRemoved = 0
@@ -524,26 +591,26 @@ def load(operator, context, PQ_dev_dir, filepath,
                 itemToLoad = item["file"]
                 devItemToLoad = item["devfile"]
                 try: bpy.ops.import_scene.dif(filepath=str(itemToLoad))
-                except FileNotFoundError: bpy.ops.import_scene.dif(filepath=str(devItemToLoad))
+                except: bpy.ops.import_scene.dif(filepath=str(devItemToLoad))
                 print("imported",item["name"],"successfully")
-            except FileNotFoundError:
+            except:
                 succeededFix = False
                 # ' in interior file paths has a \ added before it. this makes the path invalid so we need to see if this is happening and remove it
-                if str(item["file"]).find(r"\'") != -1:
-                    newPath = Path(str(item["file"]).replace(r"\'","'"))
-                    newDevPath = Path(str(item["devfile"]).replace(r"\'","'"))
-                    item["file"] = Path(newPath)
-                    item["devfile"] = Path(newDevPath)
-                    try: 
-                        try: bpy.ops.import_scene.dif(filepath=str(newPath))
-                        except FileNotFoundError: bpy.ops.import_scene.dif(filepath=str(newDevPath))
-                        succeededFix = True
-                    except FileNotFoundError:
-                        continue
-                    except:
-                        print(item["file"])
-                        print("import_dif failed on item #" + str(itemList.index(item)) + "! Item name:",str(item["name"]))
-                        failedDif.append(item["name"])
+                # if str(item["file"]).find(r"\'") != -1:
+                #     newPath = Path(str(item["file"]).replace(r"\'","'"))
+                #     newDevPath = Path(str(item["devfile"]).replace(r"\'","'"))
+                #     item["file"] = Path(newPath)
+                #     item["devfile"] = Path(newDevPath)
+                #     try: 
+                #         try: bpy.ops.import_scene.dif(filepath=str(newPath))
+                #         except: bpy.ops.import_scene.dif(filepath=str(newDevPath))
+                #         succeededFix = True
+                #     except:
+                #         continue
+                    # except:
+                    #     print(item["file"])
+                    #     print("import_dif failed on item #" + str(itemList.index(item)) + "! Item name:",str(item["name"]))
+                    #     failedDif.append(item["name"])
                 # sometimes the mis has the incorrect path and PQ automatically corrects it so we need to account for that
                 if str(item["file"]).find("interiors") != -1:
                     # if the path has interiors_*** in it, replace it with just interiors
@@ -558,23 +625,23 @@ def load(operator, context, PQ_dev_dir, filepath,
                         newDevPath = Path(str(item["devfile"]).replace("interiors","interiors" + extension))
                         try: 
                             try: bpy.ops.import_scene.dif(filepath=str(newPath))
-                            except FileNotFoundError: bpy.ops.import_scene.dif(filepath=str(newDevPath))
+                            except: bpy.ops.import_scene.dif(filepath=str(newDevPath))
                             succeededFix = True
                             break
-                        except FileNotFoundError:
-                            continue
                         except:
-                            print(item["file"])
-                            print("import_dif failed on item #" + str(itemList.index(item)) + "! Item name:",str(item["name"]))
-                            failedDif.append(item["name"])
+                            continue
+                        # except:
+                        #     print(item["file"])
+                        #     print("import_dif failed on item #" + str(itemList.index(item)) + "! Item name:",str(item["name"]))
+                        #     failedDif.append(item["name"])
                 if succeededFix == False:
                     print(item["file"])
-                    print("import_dif failed on item #" + str(itemList.index(item)) + "! Could not find file:",str(item["name"]))
-                    failedDif.append(str(item["name"] + " FileNotFoundError"))
-            except:
-                print(item["file"])
-                print("import_dif failed on item #" + str(itemList.index(item)) + "! Item name:",str(item["name"]))
-                failedDif.append(item["name"])
+                    print("import_dif failed on item #" + str(itemList.index(item)) + "File:",str(item["name"]))
+                    failedDif.append(str(item["name"]))
+            # except:
+            #     print(item["file"])
+            #     print("import_dif failed on item #" + str(itemList.index(item)) + "! Item name:",str(item["name"]))
+            #     failedDif.append(item["name"])
         else:
             try: 
                 # a few very specific dts files cause an infinite loop specifically when called from this script. loading through blender works fine. don't try to import
@@ -587,7 +654,7 @@ def load(operator, context, PQ_dev_dir, filepath,
                     devItemToLoad = item["devfile"]
                     try: bpy.ops.import_scene.dts(filepath=str(itemToLoad), reference_keyframe=reference_keyframe,
                     import_sequences=import_sequences,use_armature=use_armature)
-                    except FileNotFoundError: bpy.ops.import_scene.dts(filepath=str(devItemToLoad), reference_keyframe=reference_keyframe,
+                    except: bpy.ops.import_scene.dts(filepath=str(devItemToLoad), reference_keyframe=reference_keyframe,
                     import_sequences=import_sequences,use_armature=use_armature)
                     print("imported",item["name"],"successfully")
                     if (item["dataBlock"] == "EndPad_MBM" and use_mbu_pads == True) or item["dataBlock"] == "EndPad_MBU":
@@ -595,16 +662,13 @@ def load(operator, context, PQ_dev_dir, filepath,
                         lightBeamDevPath = str(item["devfile"]).replace(item["name"],"lightbeam.dts")
                         try: bpy.ops.import_scene.dts(filepath=str(lightBeamPath), reference_keyframe=reference_keyframe,
                                                      import_sequences=import_sequences,use_armature=use_armature)
-                        except FileNotFoundError: bpy.ops.import_scene.dts(filepath=str(lightBeamDevPath), reference_keyframe=reference_keyframe,
+                        except: bpy.ops.import_scene.dts(filepath=str(lightBeamDevPath), reference_keyframe=reference_keyframe,
                                                      import_sequences=import_sequences,use_armature=use_armature)
                         print("imported lightbeam.dts successfully")
                 else:
                     print(item["name"],"is known to freeze the mis importer for some reason. You will need to add it manually using io_scene_dts. A placeholder has been placed instead.")
                     bpy.ops.import_scene.dif(filepath=str(fakeColmesh))
                     item["name"] = item["name"][:str(item["name"]).find(".dts")] + " (import_mis placeholder).dts"
-            except FileNotFoundError:
-                print("import_dts failed on item #" + str(itemList.index(item)) + "! Could not find file:",str(item["name"]))
-                failedDts.append(str(item["name"] + " FileNotFoundError"))
             except:
                 # colmesh doesn't load so create a cube instead
                 if item["name"] == "colmesh.dts":
@@ -673,6 +737,7 @@ def load(operator, context, PQ_dev_dir, filepath,
                     else:
                         print("Didn't delete",object)
                         object["object"].dif_props.marker_type = str.casefold(item["smoothingType"])
+                        set_props(object["object"],item) if item["properties"] != None else None
                 else:
                     pathedInteriorToUse = None
                     isValid = False
@@ -714,6 +779,7 @@ def load(operator, context, PQ_dev_dir, filepath,
                             except: 
                                 print("smoothingType",pathedInteriorToUse["smoothingType"],"is not a valid smoothingType. Setting smoothingType to linear")
                                 object["object"].dif_props.marker_type = "linear"
+                        set_props(object["object"], pathedInteriorToUse) if object != objectList[0] and pathedInteriorToUse["properties"] != None else None
                     else:
                         bpy.data.objects.remove(object["object"])
             # paths are slightly different as the base interior never has a path so omit the + 1
@@ -765,7 +831,7 @@ def load(operator, context, PQ_dev_dir, filepath,
             if child != None and include_pathed_interiors == False and ((child.dif_props.interior_type == "pathed_interior") or (child.type == "CURVE" and itemObject.name.find(".dif") != -1)):
                 bpy.data.objects.remove(child)
                 continue
-            if child != None and include_game_entities == False and child.dif_props.interior_type == "game_entity":
+            if child != None and include_game_entities == False and child.dif_props.interior_type == "game_entity" and child.type != "MESH":
                 bpy.data.objects.remove(child)
                 continue
             if child != None and include_path_triggers == False and child.dif_props.interior_type == "path_trigger":
@@ -848,6 +914,7 @@ def load(operator, context, PQ_dev_dir, filepath,
                 finishedCollection.instance_offset = child.location
                 for collection in oldCollectionsChild:
                     collection.objects.unlink(child)
+        set_props(itemObject, item) if item["properties"] != None else None
         print((prevImportedNum + 1), "/", len(itemList) - numPathNodesRemoved,"items positioned")
         # i tried to use itemList.index(item) but if two items were exactly the same (yes this happens. in vanilla PQ.) it would print the wrong number
         prevImportedNum = prevImportedNum + 1

@@ -203,6 +203,36 @@ class ImportMis(bpy.types.Operator, ImportHelper):
     default=True,
     )
 
+    set_interiorinstance_dif_props: BoolProperty(
+    name="Set InteriorInstance DIF Properties",
+    description="Set InteriorInstance DIF properties. For use with the Marble Blast Toolkit",
+    default=False,
+    )
+
+    set_pathedinterior_dif_props: BoolProperty(
+    name="Set PathedInterior DIF Properties",
+    description="Set PathedInterior DIF properties. Likely to be buggy and/or not work correctly. Try enabling Include Game Entities if it fails. For use with the Marble Blast Toolkit",
+    default=False,
+    )
+
+    set_item_dif_props: BoolProperty(
+    name="Set Item DIF Properties",
+    description="Set Item DIF properties. For use with the Marble Blast Toolkit",
+    default=False,
+    )
+
+    set_staticshape_dif_props: BoolProperty(
+    name="Set StaticShape DIF Properties",
+    description="Set StaticShape DIF properties. For use with the Marble Blast Toolkit",
+    default=False,
+    )
+
+    set_tsstatic_dif_props: BoolProperty(
+    name="Set TSStatic DIF Properties",
+    description="Set TSStatic DIF properties. For use with the Marble Blast Toolkit",
+    default=False,
+    )
+
     # dts import configs
     reference_keyframe: BoolProperty(
     name="DTS Import: Reference Keyframes",
@@ -358,6 +388,36 @@ class ImportMcs(bpy.types.Operator, ImportHelper):
     name="Use MBU Pads",
     description="Use MBU pads when importing MBU levels. By default, these levels will import MBM pads and MBP checkpoints.",
     default=True,
+    )
+
+    set_interiorinstance_dif_props: BoolProperty(
+    name="Set InteriorInstance DIF Properties",
+    description="Set InteriorInstance DIF properties. For use with the Marble Blast Toolkit",
+    default=False,
+    )
+
+    set_pathedinterior_dif_props: BoolProperty(
+    name="Set PathedInterior DIF Properties",
+    description="Set PathedInterior DIF properties. Likely to be buggy and/or not work correctly. Try enabling Include Game Entities if it fails. For use with the Marble Blast Toolkit",
+    default=False,
+    )
+
+    set_item_dif_props: BoolProperty(
+    name="Set Item DIF Properties",
+    description="Set Item DIF properties. For use with the Marble Blast Toolkit",
+    default=False,
+    )
+
+    set_staticshape_dif_props: BoolProperty(
+    name="Set StaticShape DIF Properties",
+    description="Set StaticShape DIF properties. For use with the Marble Blast Toolkit",
+    default=False,
+    )
+
+    set_tsstatic_dif_props: BoolProperty(
+    name="Set TSStatic DIF Properties",
+    description="Set TSStatic DIF properties. For use with the Marble Blast Toolkit",
+    default=False,
     )
 
     # dts import configs

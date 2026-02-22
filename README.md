@@ -15,6 +15,7 @@ You can link this copy in addon preferences and import_mis will import from ther
 - Powered by [io_dif](https://github.com/RandomityGuy/io_dif)
 - Imports all interiors and aligns/scales/rotates them the way they are set up in-game
 - Can fix PathedInterior (moving platform) positions if they are positioned differently in the .dif than the .mis
+- Can set interior properties for use with the [Marble Blast Toolkit](https://github.com/FlavoredSaucer/marbleBlastToolkit)
 
 ### Shape importing
 
@@ -26,6 +27,7 @@ You can link this copy in addon preferences and import_mis will import from ther
 - Can automatically apply smooth shading to DTS files so they look like they do in-game
 - Tries to delete collision automatically to make the DTS look like it does in-game
 - Fixes weird transparency behavior that occurs on a couple of DTS models (gems, the MBG finish sign)
+- Can set shape properties for use with the [Marble Blast Toolkit](https://github.com/FlavoredSaucer/marbleBlastToolkit)
 
 ### Gem randomization
 
