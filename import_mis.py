@@ -596,17 +596,17 @@ def load(operator, context, PQ_dev_dir, filepath,
             except:
                 succeededFix = False
                 # ' in interior file paths has a \ added before it. this makes the path invalid so we need to see if this is happening and remove it
-                # if str(item["file"]).find(r"\'") != -1:
-                #     newPath = Path(str(item["file"]).replace(r"\'","'"))
-                #     newDevPath = Path(str(item["devfile"]).replace(r"\'","'"))
-                #     item["file"] = Path(newPath)
-                #     item["devfile"] = Path(newDevPath)
-                #     try: 
-                #         try: bpy.ops.import_scene.dif(filepath=str(newPath))
-                #         except: bpy.ops.import_scene.dif(filepath=str(newDevPath))
-                #         succeededFix = True
-                #     except:
-                #         continue
+                if str(item["file"]).find(r"\'") != -1:
+                    newPath = Path(str(item["file"]).replace(r"\'","'"))
+                    newDevPath = Path(str(item["devfile"]).replace(r"\'","'"))
+                    item["file"] = Path(newPath)
+                    item["devfile"] = Path(newDevPath)
+                    try: 
+                        try: bpy.ops.import_scene.dif(filepath=str(newPath))
+                        except: bpy.ops.import_scene.dif(filepath=str(newDevPath))
+                        succeededFix = True
+                    except:
+                        continue
                     # except:
                     #     print(item["file"])
                     #     print("import_dif failed on item #" + str(itemList.index(item)) + "! Item name:",str(item["name"]))
