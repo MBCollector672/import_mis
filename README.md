@@ -43,10 +43,12 @@ Download the plugin from releases and install it as you would any other Blender 
 ## Known issues/limitations
 
 - Untested on Mac/Linux
-- A few uncommon DTS files do not import correctly
+- Very likely to fail if the mission file has items that are placed with code
+- A few uncommon DTS files do not import correctly (io_scene_dts currently does not support TSSortedMesh)
 - pack1marble.dts and pack2marble.dts freeze the DTS importer (no idea why, they import fine using io_scene_dts from Blender)
 - DTS LODs are usually not correctly deleted
 - Some DTS collision is not deleted
+- Some DTS objects have their visuals marked as collision and deleted
 - Cannot import IFL animated textures
 - Cannot recreate the Marble Blast behavior of darkening/lightning the texture depending on scaling
 - Slows down the more files you have previously imported (this appears to be an issue with io_scene_dts and maybe io_dif, so there isn't anything I can do about this unfortunately)
